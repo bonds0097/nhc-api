@@ -1,4 +1,4 @@
 # Dependencies
 
-* Gorilla Mux
-* mGo
+* [Gorilla Mux](https://github.com/gorilla/mux)
+* [mGo](https://labix.org/mgo)
