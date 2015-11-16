@@ -11,6 +11,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/context"
 	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 )
 
 type Error struct {
@@ -99,4 +100,8 @@ func GetToken(w http.ResponseWriter, r *http.Request) *TokenData {
 func IsTokenSet(r *http.Request) bool {
 	_, ok := context.GetOk(r, "token")
 	return ok
+}
+
+func GetUserFromToken(db *mgo.Database, tokenData *TokenData) (*User, *Error) {
+	return FindUserById(db, bson.ObjectIdHex(tokenData.ID))
 }

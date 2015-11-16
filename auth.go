@@ -73,14 +73,14 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("User Data: %s\n", userData)
 	if userData.Email == "" || userData.Password == "" {
 		BR(w, r, errors.New("Missing information"), http.StatusBadRequest)
 		return
 	}
 
 	db := GetDB(w, r)
-	user := &User{Email: userData.Email, Password: userData.Password}
+	user := &User{FirstName: userData.FirstName, LastName: userData.LastName, Email: userData.Email,
+		Password: userData.Password, Status: UNCONFIRMED.String(), Role: USER.String()}
 	errM := CreateUser(db, user)
 	if errM != nil {
 		HandleModelError(w, r, errM)
@@ -101,4 +101,37 @@ func SetToken(w http.ResponseWriter, r *http.Request, user *User) {
 	}
 	ServeJSON(w, r, &Response{"token": tokenString}, http.StatusOK)
 	return
+}
+
+func GetAuthStatus(w http.ResponseWriter, r *http.Request) {
+	if IsTokenSet(r) {
+		type UserData struct {
+			Email     string `bson:"email" json:"email"`
+			FirstName string `bson:"firstName,omitempty" json:"firstName,omitempty"`
+			LastName  string `bson:"lastName,omitempty" json:"lastName,omitempty"`
+			Picture   string `bson:"picture,omitempty" json:"picture,omitempty"`
+			Role      string `bson:"role,omitempty" json:"role,omitempty"`
+			Status    string `bson:"status,omitempty" json:"status,omitempty"`
+		}
+
+		tokenData := GetToken(w, r)
+		db := GetDB(w, r)
+
+		user, errM := GetUserFromToken(db, tokenData)
+		if errM != nil {
+			HandleModelError(w, r, errM)
+			return
+		}
+
+		b, _ := json.Marshal(user)
+		limitedUser := &UserData{}
+		json.Unmarshal(b, limitedUser)
+		b, _ = json.Marshal(limitedUser)
+		parse := &Response{}
+		json.Unmarshal(b, parse)
+		ServeJSON(w, r, parse, http.StatusOK)
+	} else {
+		BR(w, r, errors.New("Missing Token. Please log in to continue."), http.StatusUnauthorized)
+		return
+	}
 }

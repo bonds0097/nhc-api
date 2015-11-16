@@ -35,13 +35,17 @@ func main() {
 	corsMiddleware := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:8081", "https://www.nutritionhabitchallenge.com"},
 		AllowCredentials: true,
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
+		AllowedHeaders:   []string{"*"},
 	})
 
 	router := mux.NewRouter().StrictSlash(true)
 
-	// api := router.PathPrefix("/api").Subrouter()
+	api := router.PathPrefix("/api").Subrouter()
+	api.HandleFunc("/commitments/categories", GetCommitmentCategories).Methods("GET")
 
 	authApi := router.PathPrefix("/auth").Subrouter()
+	authApi.HandleFunc("/", GetAuthStatus).Methods("GET")
 	authApi.HandleFunc("/login", Login).Methods("POST")
 	authApi.HandleFunc("/signup", SignUp).Methods("POST")
 	authApi.HandleFunc("/facebook", LoginWithFacebook).Methods("POST")

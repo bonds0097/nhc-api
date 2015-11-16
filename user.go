@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"golang.org/x/crypto/bcrypt"
@@ -10,15 +11,19 @@ import (
 )
 
 type User struct {
-	ID        bson.ObjectId `bson:"_id" json:"-"`
-	Email     string        `bson:"email" json:"email"`
-	Password  string        `bson:"password,omitempty" json:"-"`
-	FirstName string        `bson:"firstName,omitempty" json:"firstName,omitempty"`
-	LastName  string        `bson:"lastName,omitempty" json:"lastName,omitempty"`
-	Picture   string        `bson:"picture,omitempty" json:"picture,omitempty"`
-	Facebook  string        `bson:"facebook,omitempty" json:"facebook,omitempty"`
-	Google    string        `bson:"google,omitempty" json:"google,omitempty"`
-	Twitter   string        `bson:"twitter,omitempty" json:"twitter,omitempty"`
+	ID           bson.ObjectId `bson:"_id" json:"-"`
+	Email        string        `bson:"email" json:"email"`
+	Password     string        `bson:"password,omitempty" json:"-"`
+	FirstName    string        `bson:"firstName,omitempty" json:"firstName,omitempty"`
+	LastName     string        `bson:"lastName,omitempty" json:"lastName,omitempty"`
+	Organization string        `bson:"organization,omitempty" json:"organization,omitempty"`
+	Comment      string        `bson:"comment,omitempty" json:"comment,omitempty"`
+	Donation     string        `bson:"donation,omitempty" json:"donation,omitempty"`
+	Picture      string        `bson:"picture,omitempty" json:"picture,omitempty"`
+	Facebook     string        `bson:"facebook,omitempty" json:"facebook,omitempty"`
+	Google       string        `bson:"google,omitempty" json:"google,omitempty"`
+	Role         string        `bson:"role,omitempty" json:"role,omitempty"`
+	Status       string        `bson:"status,omitempty" json:"status,omitempty"`
 }
 
 func (u *User) Save(db *mgo.Database) (err error) {
@@ -37,13 +42,13 @@ func CreateUser(db *mgo.Database, u *User) *Error {
 	uC := db.C("users")
 	pwHash, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return &Error{Reason: errors.New("Couldn't hash password"), Internal: true}
+		return &Error{Reason: errors.New("Couldn't hash password."), Internal: true}
 	}
 	u.Password = string(pwHash)
 	u.ID = bson.NewObjectId()
 	err = uC.Insert(u)
 	if mgo.IsDup(err) {
-		return &Error{Reason: errors.New("User already exists"), Internal: false}
+		return &Error{Reason: errors.New("User already exists. Please log in instead."), Internal: false, Code: 409}
 	}
 	return nil
 }
@@ -86,9 +91,13 @@ func FindUserById(db *mgo.Database, id bson.ObjectId) (*User, *Error) {
 	user := &User{}
 	err := uC.FindId(id).One(user)
 	if err != nil {
-		return nil, &Error{Reason: err, Internal: true}
+		if err == mgo.ErrNotFound {
+			return nil, &Error{Reason: errors.New("User not found."), Internal: false, Code: http.StatusUnauthorized}
+		} else {
+			return nil, &Error{Reason: errors.New(fmt.Sprintf("mGo error: %s\n", err)), Internal: true}
+		}
 	} else if user.ID == "" {
-		return nil, &Error{Reason: errors.New("No user found"), Internal: false}
+		return nil, &Error{Reason: errors.New("No user found."), Internal: false, Code: http.StatusUnauthorized}
 	}
 	return user, nil
 }

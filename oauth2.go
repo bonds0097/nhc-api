@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 
 	"github.com/google/go-querystring/query"
@@ -95,7 +96,7 @@ func LoginWithFacebook(w http.ResponseWriter, r *http.Request) {
 
 	u, _ = url.ParseRequestURI(apiUrl)
 	u.Path = graphApiPath
-	u.RawQuery = v.Encode() + "&fields=id,name,email"
+	u.RawQuery = v.Encode() + "&fields=id,first_name, last_name ,email"
 	urlStr = fmt.Sprintf("%v", u)
 
 	resProfile, body, _ := gorequest.New().Get(urlStr).End()
@@ -165,9 +166,13 @@ func LoginWithFacebook(w http.ResponseWriter, r *http.Request) {
 
 		// Create user with his facebook id
 		user := NewUser()
+		user.FirstName = profileData["first_name"].(string)
+		user.LastName = profileData["last_name"].(string)
 		user.Facebook = profileData["id"].(string)
 		user.Email = profileData["email"].(string)
 		user.Picture = "https://graph.facebook.com/v2.5/" + profileData["id"].(string) + "/picture?type=large"
+		user.Role = USER.String()
+		user.Status = UNREGISTERED.String()
 		err = user.Save(db)
 		if err != nil {
 			ISR(w, r, err)
@@ -287,9 +292,18 @@ func LoginWithGoogle(w http.ResponseWriter, r *http.Request) {
 
 		// Create user with his google id
 		user := NewUser()
+		user.FirstName = profileData["given_name"].(string)
+		user.LastName = profileData["family_name"].(string)
 		user.Google = profileData["sub"].(string)
 		user.Email = profileData["email"].(string)
 		user.Picture = strings.Replace(profileData["picture"].(string), "sz=50", "sz=200", -1)
+		user.Role = USER.String()
+		if b, err := strconv.ParseBool(profileData["email_verified"].(string)); err == nil && b {
+			user.Status = UNREGISTERED.String()
+		} else {
+			user.Status = UNCONFIRMED.String()
+		}
+
 		err = user.Save(db)
 		if err != nil {
 			ISR(w, r, err)
