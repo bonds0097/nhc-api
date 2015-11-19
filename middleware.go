@@ -27,6 +27,16 @@ func init() {
 		return
 	}
 }
+
+func HeaderMiddleware() negroni.Handler {
+	return negroni.HandlerFunc(func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+		if ENV == "prod" || ENV == "test" {
+			w.Header().Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+		}
+		next(w, r)
+	})
+}
+
 func JWTMiddleware() negroni.Handler {
 	return negroni.HandlerFunc(func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 		if h := r.Header.Get("Authorization"); h != "" {

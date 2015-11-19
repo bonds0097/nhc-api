@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"flag"
 	"log"
 	"net/http"
 	"os"
@@ -17,6 +17,8 @@ const DBNAME = "nhc"
 var (
 	PORT        = ":4433"
 	MONGODB_URL = "localhost"
+	ENV         string
+	URL         string
 )
 
 func init() {
@@ -26,9 +28,20 @@ func init() {
 	if m := os.Getenv("MONGODB_URL"); m != "" {
 		MONGODB_URL = m
 	}
+
+	flag.StringVar(&ENV, "env", "prod", "Environment to deploy to. Options: prod, test, or dev")
+	flag.Parse()
 }
 
 func main() {
+	if ENV == "prod" {
+		URL = "www.nutritionhabitchallenge.com"
+	} else if ENV == "test" {
+		URL = "test.nutritionhabitchallenge.com"
+	} else {
+		URL = "localhost"
+	}
+
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	dbSession := DBConnect(MONGODB_URL)
 	err := DBEnsureIndices(dbSession)
@@ -37,7 +50,7 @@ func main() {
 	}
 
 	corsMiddleware := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:8081", "https://www.nutritionhabitchallenge.com"},
+		AllowedOrigins:   []string{"http://71.58.99.0:8081", "http://localhost:8081", "https://www.nutritionhabitchallenge.com", "https://test.nutritionhabitchallenge.com"},
 		AllowCredentials: true,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
 		AllowedHeaders:   []string{"*"},
@@ -64,9 +77,20 @@ func main() {
 	n.Use(corsMiddleware)
 	n.UseHandler(router)
 
-	log.Printf("Launching server at http://localhost%s\n", PORT)
-	err = http.ListenAndServe(PORT, n)
-	if err != nil {
-		fmt.Println(err)
+	// Start the servers based on whether or not HTTPS is enabled.
+	if ENV == "prod" || ENV == "test" {
+		log.Println("HTTPS is enabled. Starting server on Port 4433.")
+
+		err := http.ListenAndServeTLS(":4433", "/var/private/nhc_cert.pem", "/var/private/nhc_key.pem", nil)
+		if err != nil {
+			log.Fatalf("HTTPS Error: %s\n", err)
+		}
+	} else {
+		log.Println("HTTPS is not enabled. Starting server on Port 4433.")
+
+		err := http.ListenAndServe(":4433", nil)
+		if err != nil {
+			log.Fatalf("HTTPS Error: %s\n", err)
+		}
 	}
 }
