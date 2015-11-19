@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"runtime"
@@ -30,7 +31,10 @@ func init() {
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	dbSession := DBConnect(MONGODB_URL)
-	DBEnsureIndices(dbSession)
+	err := DBEnsureIndices(dbSession)
+	if err != nil {
+		log.Fatalf("Error ensuring DB indices: %s\n", err)
+	}
 
 	corsMiddleware := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:8081", "https://www.nutritionhabitchallenge.com"},
@@ -42,7 +46,9 @@ func main() {
 	router := mux.NewRouter().StrictSlash(true)
 
 	api := router.PathPrefix("/api").Subrouter()
-	api.HandleFunc("/commitments/categories", GetCommitmentCategories).Methods("GET")
+	api.HandleFunc("/commitments", GetCommitments).Methods("GET")
+	api.HandleFunc("/organizations", GetOrganizations).Methods("GET")
+	api.HandleFunc("/registration", RegisterUser).Methods("POST")
 
 	authApi := router.PathPrefix("/auth").Subrouter()
 	authApi.HandleFunc("/", GetAuthStatus).Methods("GET")
@@ -58,8 +64,8 @@ func main() {
 	n.Use(corsMiddleware)
 	n.UseHandler(router)
 
-	fmt.Println("Launching server at http://localhost" + PORT)
-	err := http.ListenAndServe(PORT, n)
+	log.Printf("Launching server at http://localhost%s\n", PORT)
+	err = http.ListenAndServe(PORT, n)
 	if err != nil {
 		fmt.Println(err)
 	}

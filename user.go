@@ -16,7 +16,9 @@ type User struct {
 	Password     string        `bson:"password,omitempty" json:"-"`
 	FirstName    string        `bson:"firstName,omitempty" json:"firstName,omitempty"`
 	LastName     string        `bson:"lastName,omitempty" json:"lastName,omitempty"`
+	Family       string        `bson:"family,omitempty" json:"family,omitempty"`
 	Organization string        `bson:"organization,omitempty" json:"organization,omitempty"`
+	Sharing      string        `bson:"sharing,omitempty" json:"sharing,omitempty"`
 	Comment      string        `bson:"comment,omitempty" json:"comment,omitempty"`
 	Donation     string        `bson:"donation,omitempty" json:"donation,omitempty"`
 	Picture      string        `bson:"picture,omitempty" json:"picture,omitempty"`
@@ -24,6 +26,7 @@ type User struct {
 	Google       string        `bson:"google,omitempty" json:"google,omitempty"`
 	Role         string        `bson:"role,omitempty" json:"role,omitempty"`
 	Status       string        `bson:"status,omitempty" json:"status,omitempty"`
+	Participants []Participant `bson:"participants,omitempty" json:"participants,omitempty"`
 }
 
 func (u *User) Save(db *mgo.Database) (err error) {

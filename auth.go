@@ -106,12 +106,12 @@ func SetToken(w http.ResponseWriter, r *http.Request, user *User) {
 func GetAuthStatus(w http.ResponseWriter, r *http.Request) {
 	if IsTokenSet(r) {
 		type UserData struct {
-			Email     string `bson:"email" json:"email"`
-			FirstName string `bson:"firstName,omitempty" json:"firstName,omitempty"`
-			LastName  string `bson:"lastName,omitempty" json:"lastName,omitempty"`
-			Picture   string `bson:"picture,omitempty" json:"picture,omitempty"`
-			Role      string `bson:"role,omitempty" json:"role,omitempty"`
-			Status    string `bson:"status,omitempty" json:"status,omitempty"`
+			Email     string `json:"email"`
+			FirstName string `json:"firstName,omitempty"`
+			LastName  string `json:"lastName,omitempty"`
+			Picture   string `json:"picture,omitempty"`
+			Role      string `json:"role,omitempty"`
+			Status    string `json:"status,omitempty"`
 		}
 
 		tokenData := GetToken(w, r)

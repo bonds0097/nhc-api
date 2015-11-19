@@ -1,0 +1,61 @@
+[{
+    "name": "Beverage Consumption",
+    "urls": [
+        "http://www.cdc.gov/healthyweight/healthy_eating/drinks.html",
+        "http://www.eatright.org/resource/fitness/sports-and-performance/hydrate-right/water-go-with-the-flow"
+    ],
+    "commitments": [
+        "I will replace soda with water",
+        "I will drink half my body weight in water each day",
+        "Other"
+    ]
+}, {
+    "name": "Fruit/Vegetable Consumption",
+    "urls": [
+        "http://www.heart.org/HEARTORG/GettingHealthy/NutritionCenter/HealthyEating/Eat-More-Fruits-and-Vegetables_UCM_320237_Article.jsp",
+        "http://www.choosemyplate.gov/fruits-nutrients-health",
+        "http://www.choosemyplate.gov/vegetables-nutrients-health"
+    ],
+    "commitments": [
+        "I will eat no less than 4 servings of fresh fruits/vegetables each day",
+        "I will eat vegetables with two meals per day",
+        "Other"
+    ]
+}, {
+    "name": "Breakfast",
+    "urls": [
+        "https://www.eatrightpro.org/~/media/eatrightpro files/career/career development/flyers and handouts/ernt_power_up_with_breakfast.ashx",
+        "http://www.consumerreports.org/cro/magazine/2014/10/why-eating-the-right-breakfast-is-so-important/index.htm"
+    ],
+    "commitments": [
+        "I will get up 15 minutes earlier each morning and prepare breakfast; no processed foods",
+        "I will eat a serving of protein with breakfast every day",
+        "Other"
+    ]
+}, {
+    "name": "Snacking",
+    "urls": [
+        "http://www.heart.org/HEARTORG/GettingHealthy/NutritionCenter/HealthyCooking/Healthy-Snacking_UCM_301489_Article.jsp",
+        "http://www.heart.org/HEARTORG/GettingHealthy/NutritionCenter/HealthyCooking/Healthy-Snacking_UCM_301489_Article.jsp"
+    ],
+    "commitments": [
+        "I will replace empty calorie/processed snacks with fruits and vegetables",
+        "I will eat no more than 125 calories after my evening meal",
+        "Other"
+    ]
+}, {
+    "name": "Mindful Eating",
+    "urls": [
+        "http://www.health.harvard.edu/staying-healthy/mindful-eating",
+        "http://www.health.harvard.edu/staying-healthy/mindful-eating"
+    ],
+    "commitments": [
+        "All meals will have a well-defined beginning and end (no seconds)",
+        "I will say a word of thanks before eating each meal, showing gratitude for what I have",
+        "I will start a food journal and record all food and beverage consumption",
+        "I will make a healthy modification with every meal (i.e. no butter on bread; no dressing on salad; broiled instead of fried)",
+        "Other"
+    ]
+}, {
+    "name": "Other"
+}]

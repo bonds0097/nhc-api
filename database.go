@@ -29,12 +29,41 @@ func DBConnect(address string) *mgo.Session {
 	return session
 }
 
-func DBEnsureIndices(s *mgo.Session) error {
+func DBEnsureIndices(s *mgo.Session) (err error) {
 	i := mgo.Index{
 		Key:        []string{"email"},
 		Unique:     true,
 		Background: true,
 		Name:       "email",
 	}
-	return s.DB(DBNAME).C("users").EnsureIndex(i)
+	err = s.DB(DBNAME).C("users").EnsureIndex(i)
+	if err != nil {
+		return
+	}
+
+	i = mgo.Index{
+		Key:        []string{"name"},
+		Unique:     true,
+		Background: true,
+		Name:       "name",
+	}
+
+	err = s.DB(DBNAME).C("organizations").EnsureIndex(i)
+	if err != nil {
+		return
+	}
+
+	i = mgo.Index{
+		Key:        []string{"name"},
+		Unique:     true,
+		Background: true,
+		Name:       "name",
+	}
+
+	err = s.DB(DBNAME).C("commitments").EnsureIndex(i)
+	if err != nil {
+		return
+	}
+
+	return
 }

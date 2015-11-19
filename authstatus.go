@@ -6,6 +6,7 @@ const (
 	UNKNOWN Status = iota
 	UNCONFIRMED
 	UNREGISTERED
+	PENDING
 	REGISTERED
 )
 
@@ -13,6 +14,7 @@ var statuses = [...]string{
 	"unknown",
 	"unconfirmed",
 	"unregistered",
+	"pending",
 	"registered",
 }
 

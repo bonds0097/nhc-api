@@ -22,6 +22,8 @@ type Error struct {
 
 type Response map[string]interface{}
 
+type ResponseArray []map[string]interface{}
+
 type TokenData struct {
 	ID  string
 	Iat float64
@@ -72,6 +74,12 @@ func NotAllowed(w http.ResponseWriter, r *http.Request) {
 }
 
 func ServeJSON(w http.ResponseWriter, r *http.Request, json *Response, code int) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	fmt.Fprint(w, json)
+}
+
+func ServeJSONArray(w http.ResponseWriter, r *http.Request, json string, code int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
 	fmt.Fprint(w, json)
