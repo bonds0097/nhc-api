@@ -6,7 +6,7 @@
     ],
     "commitments": [
         "I will replace soda with water",
-        "I will drink half my body weight in water each day",
+        "I will drink half my body weight in ounces of water each day.",
         "Other"
     ]
 }, {
@@ -28,7 +28,7 @@
         "http://www.consumerreports.org/cro/magazine/2014/10/why-eating-the-right-breakfast-is-so-important/index.htm"
     ],
     "commitments": [
-        "I will get up 15 minutes earlier each morning and prepare breakfast; no processed foods",
+        "I will wake up 15 min earlier and prepare breakfast; no processed foods.",
         "I will eat a serving of protein with breakfast every day",
         "Other"
     ]
@@ -36,7 +36,7 @@
     "name": "Snacking",
     "urls": [
         "http://www.heart.org/HEARTORG/GettingHealthy/NutritionCenter/HealthyCooking/Healthy-Snacking_UCM_301489_Article.jsp",
-        "http://www.heart.org/HEARTORG/GettingHealthy/NutritionCenter/HealthyCooking/Healthy-Snacking_UCM_301489_Article.jsp"
+        "http://www.eatrightpro.org/~/media/eatrightpro%20files/career/career%20development/flyers%20and%20handouts/ernt_smart_snacking_for_adults_and-teens.ashx"
     ],
     "commitments": [
         "I will replace empty calorie/processed snacks with fruits and vegetables",
@@ -47,13 +47,13 @@
     "name": "Mindful Eating",
     "urls": [
         "http://www.health.harvard.edu/staying-healthy/mindful-eating",
-        "http://www.health.harvard.edu/staying-healthy/mindful-eating"
+        "http://www.choosemyplate.gov/ten-tips-enjoy-your-food"
     ],
     "commitments": [
         "All meals will have a well-defined beginning and end (no seconds)",
         "I will say a word of thanks before eating each meal, showing gratitude for what I have",
         "I will start a food journal and record all food and beverage consumption",
-        "I will make a healthy modification with every meal (i.e. no butter on bread; no dressing on salad; broiled instead of fried)",
+        "I will make a healthy modification with every meal (i.e. baked instead of fried)",
         "Other"
     ]
 }, {

@@ -27,11 +27,17 @@ type User struct {
 	Role         string        `bson:"role,omitempty" json:"role,omitempty"`
 	Status       string        `bson:"status,omitempty" json:"status,omitempty"`
 	Participants []Participant `bson:"participants,omitempty" json:"participants,omitempty"`
+	Code         string        `bson:"code,omitempty" json:"-"`
 }
 
-func (u *User) Save(db *mgo.Database) (err error) {
+func (u *User) Save(db *mgo.Database) (errM *Error) {
 	uC := db.C("users")
-	_, err = uC.UpsertId(u.ID, bson.M{"$set": u})
+	_, err := uC.UpsertId(u.ID, bson.M{"$set": u})
+	if err != nil {
+		errM.Internal = true
+		errM.Reason = errors.New(fmt.Sprintf("Error updating user: %s\n", err))
+	}
+
 	return
 }
 
@@ -81,10 +87,12 @@ func FindUserByQuery(db *mgo.Database, query bson.M) (*User, *Error) {
 	uC := db.C("users")
 	user := &User{}
 	err := uC.Find(query).One(user)
-	if err != nil {
-		return nil, &Error{Reason: err, Internal: true}
+	if err == mgo.ErrNotFound {
+		return nil, &Error{Reason: errors.New("No user found."), Internal: false, Code: http.StatusNotFound}
 	} else if user.ID == "" {
-		return nil, &Error{Reason: errors.New("No user found"), Internal: false}
+		return nil, &Error{Reason: errors.New("No user found."), Internal: false, Code: http.StatusNotFound}
+	} else if err != nil {
+		return nil, &Error{Reason: err, Internal: true}
 	}
 	return user, nil
 }
@@ -107,4 +115,8 @@ func FindUserById(db *mgo.Database, id bson.ObjectId) (*User, *Error) {
 
 func FindUserByProvider(db *mgo.Database, provider, sub string) (*User, *Error) {
 	return FindUserByQuery(db, bson.M{provider: sub})
+}
+
+func FindUserByCode(db *mgo.Database, code string) (*User, *Error) {
+	return FindUserByQuery(db, bson.M{"code": code})
 }

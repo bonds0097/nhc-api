@@ -32,13 +32,13 @@ func GetCommitments(w http.ResponseWriter, r *http.Request) {
 	ServeJSONArray(w, r, string(b), http.StatusOK)
 }
 
-func FindCommitments(db *mgo.Database) (commitments []Commitment, error *Error) {
+func FindCommitments(db *mgo.Database) (commitments []Commitment, errM *Error) {
 	c := db.C("commitments")
 	err := c.Find(nil).All(&commitments)
 	if err != nil {
-		error.Reason = errors.New(fmt.Sprintf("Error retrieving commitments from DB: %s", err))
-		error.Internal = true
-		return nil, error
+		errM.Reason = errors.New(fmt.Sprintf("Error retrieving commitments from DB: %s", err))
+		errM.Internal = true
+		return nil, errM
 	}
 
 	return

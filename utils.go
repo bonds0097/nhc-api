@@ -62,7 +62,7 @@ func HandleModelError(w http.ResponseWriter, r *http.Request, errM *Error) {
 
 func ISR(w http.ResponseWriter, r *http.Request, msg error) {
 	w.WriteHeader(http.StatusInternalServerError)
-	log.Println(msg)
+	log.Printf("Internal Server Error:\n%s", msg)
 }
 
 func BR(w http.ResponseWriter, r *http.Request, msg error, code int) {

@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 )
@@ -69,11 +68,9 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 		user.Participants = registrationData.Participants
 		user.Family = registrationData.FamilyCode
 
-		log.Println(user)
-
-		err = user.Save(db)
-		if err != nil {
-			ISR(w, r, errors.New(fmt.Sprintf("Error saving registration data to DB: %s\n", err)))
+		errM = user.Save(db)
+		if errM != nil {
+			HandleModelError(w, r, errM)
 			return
 		}
 

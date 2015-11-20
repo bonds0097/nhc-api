@@ -37,7 +37,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	var userData UserData
 	err := decoder.Decode(&userData)
 	if err != nil {
-		log.Println(err)
+		BR(w, r, errors.New("Failed to parse request data."), http.StatusBadRequest)
 		return
 	}
 
@@ -69,7 +69,7 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 	var userData UserData
 	err := decoder.Decode(&userData)
 	if err != nil {
-		log.Println(err)
+		BR(w, r, errors.New("Unable to parse request."), http.StatusBadRequest)
 		return
 	}
 
@@ -78,15 +78,64 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db := GetDB(w, r)
-	user := &User{FirstName: userData.FirstName, LastName: userData.LastName, Email: userData.Email,
-		Password: userData.Password, Status: UNCONFIRMED.String(), Role: USER.String()}
-	errM := CreateUser(db, user)
+	// Generate confirmation code.
+	confirmationCode, errM := GenerateConfirmationCode()
 	if errM != nil {
 		HandleModelError(w, r, errM)
 		return
 	}
+
+	db := GetDB(w, r)
+	user := &User{FirstName: userData.FirstName, LastName: userData.LastName, Email: userData.Email,
+		Password: userData.Password, Status: UNCONFIRMED.String(), Role: USER.String(),
+		Code: confirmationCode}
+	errM = CreateUser(db, user)
+	if errM != nil {
+		HandleModelError(w, r, errM)
+		return
+	}
+
+	// Send confirmation e-mail if all went well.
+	go SendVerificationMail(user)
+
 	SetToken(w, r, user)
+}
+
+func Verify(w http.ResponseWriter, r *http.Request) {
+	type Message struct {
+		Code string `json:"code"`
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	var message Message
+	err := decoder.Decode(&message)
+	if err != nil {
+		BR(w, r, errors.New("Unable to parse request."), http.StatusBadRequest)
+		return
+	}
+
+	db := GetDB(w, r)
+	user, errM := FindUserByCode(db, message.Code)
+	if errM != nil {
+		HandleModelError(w, r, errM)
+		return
+	}
+
+	user.Status = UNREGISTERED.String()
+	user.Code = ""
+	errM = user.Save(db)
+	if errM != nil {
+		HandleModelError(w, r, errM)
+		return
+	}
+
+	if !IsTokenSet(r) {
+		SetToken(w, r, user)
+		return
+	}
+
+	ServeJSON(w, r, &Response{"status": "ok"}, http.StatusOK)
+	return
 }
 
 func SetToken(w http.ResponseWriter, r *http.Request, user *User) {

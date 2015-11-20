@@ -82,15 +82,20 @@ func LoginWithFacebook(w http.ResponseWriter, r *http.Request) {
 	if res.StatusCode != 200 {
 		var errorData map[string]interface{}
 		json.Unmarshal([]byte(body), &errorData)
-
+		log.Println(errorData)
 		ServeJSON(w, r, &Response{
 			"message": errorData["error"].(map[string]interface{})["message"],
 		}, 500)
 		return
 	}
+	log.Println("Made it to Step 2.")
 	// Step 2. Retrieve profile information about the current user.
 	var atData accessTokenData
 	err := json.Unmarshal([]byte(body), &atData)
+	if err != nil {
+		ISR(w, r, errors.New(fmt.Sprintf("Error reading profile data from Facebook: %s\n", err)))
+		return
+	}
 
 	v, _ = query.Values(atData)
 
@@ -113,6 +118,7 @@ func LoginWithFacebook(w http.ResponseWriter, r *http.Request) {
 
 	db := GetDB(w, r)
 	if IsTokenSet(r) {
+		log.Println("Made it to Step 3a.")
 		// Step 3a. Link user accounts.
 		existingUser, errM := FindUserByProvider(db, "facebook", profileData["id"].(string))
 		if existingUser != nil {
@@ -146,24 +152,27 @@ func LoginWithFacebook(w http.ResponseWriter, r *http.Request) {
 			user.Picture = "https://graph.facebook.com/v2.5/" + profileData["id"].(string) + "/picture?type=large"
 		}
 
-		err = user.Save(db)
-		if err != nil {
-			ISR(w, r, errors.New("Couldn't save user profile informations"))
+		errM = user.Save(db)
+		if errM != nil {
+			HandleModelError(w, r, errM)
+			return
 		}
 
 		SetToken(w, r, user)
 	} else {
+		log.Println("Made it to Step 3b.")
 		// Step 3b. Create a new user account or return an existing one.
 		existingUser, errM := FindUserByProvider(db, "facebook", profileData["id"].(string))
 		if existingUser != nil {
 			SetToken(w, r, existingUser)
 			return
 		}
-		if errM != nil && errM.Reason != mgo.ErrNotFound {
+		if errM != nil && errM.Code != http.StatusNotFound {
 			HandleModelError(w, r, errM)
 			return
 		}
 
+		log.Println("Made it to User Creation.")
 		// Create user with his facebook id
 		user := NewUser()
 		user.FirstName = profileData["first_name"].(string)
@@ -173,12 +182,13 @@ func LoginWithFacebook(w http.ResponseWriter, r *http.Request) {
 		user.Picture = "https://graph.facebook.com/v2.5/" + profileData["id"].(string) + "/picture?type=large"
 		user.Role = USER.String()
 		user.Status = UNREGISTERED.String()
-		err = user.Save(db)
-		if err != nil {
-			ISR(w, r, err)
+		errM = user.Save(db)
+		if errM != nil {
+			HandleModelError(w, r, errM)
 			return
 		}
 
+		log.Println("Made it to setting token.")
 		SetToken(w, r, user)
 	}
 }
@@ -271,9 +281,10 @@ func LoginWithGoogle(w http.ResponseWriter, r *http.Request) {
 			user.Picture = strings.Replace(profileData["picture"].(string), "sz=50", "sz=200", -1)
 		}
 
-		err = user.Save(db)
-		if err != nil {
-			ISR(w, r, errors.New("Couldn't save user profile informations"))
+		errM = user.Save(db)
+		if errM != nil {
+			HandleModelError(w, r, errM)
+			return
 		}
 
 		SetToken(w, r, user)
@@ -285,7 +296,7 @@ func LoginWithGoogle(w http.ResponseWriter, r *http.Request) {
 			SetToken(w, r, existingUser)
 			return
 		}
-		if errM != nil && errM.Reason != mgo.ErrNotFound {
+		if errM != nil && errM.Code != http.StatusNotFound {
 			HandleModelError(w, r, errM)
 			return
 		}
@@ -304,9 +315,9 @@ func LoginWithGoogle(w http.ResponseWriter, r *http.Request) {
 			user.Status = UNCONFIRMED.String()
 		}
 
-		err = user.Save(db)
+		errM = user.Save(db)
 		if err != nil {
-			ISR(w, r, err)
+			HandleModelError(w, r, errM)
 			return
 		}
 

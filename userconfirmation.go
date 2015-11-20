@@ -1,17 +1,24 @@
 package main
 
-import ()
+import (
+	"crypto/rand"
+	"encoding/base64"
+	"errors"
+	"fmt"
+)
 
 // Generate a confirmation code for a user.
-func GenerateConfirmationCode() (code string) {
-	return
-}
+func GenerateConfirmationCode() (code string, errM *Error) {
+	c := 32
+	b := make([]byte, c)
+	_, err := rand.Read(b)
+	if err != nil {
+		errM.Internal = true
+		errM.Reason = errors.New(fmt.Sprintf("Error generating user confirmation code: %s\n", err))
+		return "", errM
+	}
 
-func ConfirmUser(user *User, code string) (result bool, err Error) {
-	// Verify that user's confirmation code and provided string are identical.
+	code = base64.URLEncoding.EncodeToString(b)
 
-	// If strings are identical, change user's status to UNREGISTERED, delete confirmation code from
-	// user and return true. Otherwise, return false. Return an error if user does not have a
-	// confirmation field.
-	return
+	return code, nil
 }
