@@ -29,6 +29,14 @@ type RegistrationConfirmationTemplate struct {
 	Family    string
 }
 
+const registrationEmail = `
+<p>Hi {{.FirstName}},</p>
+<p>Congratulations on taking a step towards improving your health. Your participation is benefitting you and our community.</p>
+{{with .Family}}Here is your family code to share with members of your family, they'll need it when they register: <strong>{{.}}</strong>{{end}}
+<p>We’ll be sending you an email as we get closer to the event. In the meantime, check out the <a href="https://www.nutritionhabitchallenge.com/resources">Resource Page</a> for great information and insights to help you be successful with the Challenge.</p>
+<p>Sincerely,<br />The NHC Team</p>
+`
+
 func SendMail(recipient string, subject string, body string) (errM *Error) {
 	m := gomail.NewMessage()
 	m.SetHeader("From", "do-not-reply@nutritionhabitchallenge.com")
@@ -61,5 +69,16 @@ func SendVerificationMail(user *User) (errM *Error) {
 }
 
 func SendRegistrationConfirmation(user *User) (errM *Error) {
-	return
+	var body bytes.Buffer
+
+	confirmation := RegistrationConfirmationTemplate{FirstName: user.FirstName, Family: user.Family}
+	template := template.Must(template.New("e-mail").Parse(registrationEmail))
+	err := template.Execute(&body, &confirmation)
+	if err != nil {
+		errM = &Error{Reason: errors.New(fmt.Sprintf("Error executing template: %s\n", err)), Internal: true}
+		return
+	}
+
+	return SendMail(user.Email, "Nutrition Habit Challenge: Registration Confirmation",
+		string(body.Bytes()))
 }
