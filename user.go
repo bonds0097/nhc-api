@@ -34,8 +34,12 @@ func (u *User) Save(db *mgo.Database) (errM *Error) {
 	uC := db.C("users")
 	_, err := uC.UpsertId(u.ID, bson.M{"$set": u})
 	if err != nil {
-		errM.Internal = true
-		errM.Reason = errors.New(fmt.Sprintf("Error updating user: %s\n", err))
+		if mgo.IsDup(err) {
+			errM = &Error{Internal: false, Reason: errors.New("That user already exists. Please login first."), Code: http.StatusConflict}
+		} else {
+			errM = &Error{Internal: true, Reason: errors.New(fmt.Sprintf("Error updating user: %s\n", err))}
+		}
+		return
 	}
 
 	return

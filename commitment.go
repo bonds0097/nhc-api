@@ -36,9 +36,8 @@ func FindCommitments(db *mgo.Database) (commitments []Commitment, errM *Error) {
 	c := db.C("commitments")
 	err := c.Find(nil).All(&commitments)
 	if err != nil {
-		errM.Reason = errors.New(fmt.Sprintf("Error retrieving commitments from DB: %s", err))
-		errM.Internal = true
-		return nil, errM
+		errM = &Error{Reason: errors.New(fmt.Sprintf("Error retrieving commitments from DB: %s", err)), Internal: true}
+		return
 	}
 
 	return

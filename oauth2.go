@@ -224,6 +224,10 @@ func LoginWithGoogle(w http.ResponseWriter, r *http.Request) {
 	// Step 2. Retrieve profile information about the current user.
 	var atData accessTokenData
 	err := json.Unmarshal([]byte(body), &atData)
+	if err != nil {
+		ISR(w, r, errors.New(fmt.Sprintf("Error reading profile data from Google: %s\n", err)))
+		return
+	}
 
 	qs, _ := query.Values(atData)
 
@@ -316,7 +320,7 @@ func LoginWithGoogle(w http.ResponseWriter, r *http.Request) {
 		}
 
 		errM = user.Save(db)
-		if err != nil {
+		if errM != nil {
 			HandleModelError(w, r, errM)
 			return
 		}
