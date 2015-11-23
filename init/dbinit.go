@@ -43,10 +43,13 @@ func main() {
 
 	// Import Commitments
 	type Commitment struct {
-		ID          bson.ObjectId `bson:"_id,omitempty" json:"-"`
-		Name        string        `bson:"name" json:"name"`
-		Urls        []string      `bson:"urls,omitempty" json:"urls,omitempty"`
-		Commitments []string      `bson:"commitments,omitempty" json:"commitments,omitempty"`
+		ID    bson.ObjectId `bson:"_id,omitempty" json:"-"`
+		Name  string        `bson:"name" json:"name"`
+		Links []struct {
+			Url   string `bson:"url,omitempty" json:"url,omitempty"`
+			Title string `bson:"title,omitempty" json:"title,omitempty"`
+		} `bson:"links,omitempty" json:"links,omitempty"`
+		Commitments []string `bson:"commitments,omitempty" json:"commitments,omitempty"`
 	}
 
 	commitments, err := ioutil.ReadFile("./commitments.json")
