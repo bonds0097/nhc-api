@@ -50,6 +50,20 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Validate all data.
+		type RegistrationValidation struct {
+			Organization []string `json:"organization,omitempty"`
+			Comment      []string `json:"comment,omitempty"`
+			Donation     []string `json:"donation,omitempty"`
+			Sharing      []string `json:"sharing,omitempty"`
+			Participants []struct {
+				FirstName  []string `json:firstName,omitempty"`
+				LastName   []string `json:lastName,omitempty"`
+				AgeRange   []string `json:ageRange,omitempty"`
+				Category   []string `json:category,omitempty"`
+				Commitment []string `json:commitment,omitempty"`
+			} `json:"participants"`
+			FamilyCode []string `json:"familyCode,omitempty"`
+		}
 
 		// Generate family code if needed.
 
