@@ -27,13 +27,16 @@ The NHC Team</p>
 type RegistrationConfirmationTemplate struct {
 	FirstName string
 	Family    string
+	Donation  string
 }
 
 const registrationEmail = `
 <p>Hi {{.FirstName}},</p>
-<p>Congratulations on taking a step towards improving your health. Your participation is benefitting you and our community.</p>
-{{with .Family}}Here is your family code to share with members of your family, they'll need it when they register: <strong>{{.}}</strong>{{end}}
+<p>Congratulations! You are now registered for the Nutrition Habit Challenge 2016. Your participation benefits both you and our community.</p>
+{{with .Family}}<p>Here is your family code to share with members of your family, they'll need it when they register: <strong>{{.}}</strong></p>{{end}}
 <p>We’ll be sending you an email as we get closer to the event. In the meantime, check out the <a href="https://www.nutritionhabitchallenge.com/resources">Resource Page</a> for great information and insights to help you be successful with the Challenge.</p>
+{{if eq .Donation "ysb"}}<p>Since you indicated an interesting in donating to the Youth Service Bureau, follow <strong><a href="http://ccysb.com/?page_id=1197" target="_blank">this link</a></strong> to complete your donation!</p>
+{{else if eq .Donation "cvim"}}<p>Since you indicated an interesting in donating to the Centre Volunteers in Medicine, follow <a href="https://cvim.ejoinme.org/MyPages/CVIMNHC/tabid/524126/Default.aspx" target="_blank">this link</a> to complete your donation!</p>{{end}}
 <p>Sincerely,<br />The NHC Team</p>
 `
 
@@ -71,7 +74,7 @@ func SendVerificationMail(user *User) (errM *Error) {
 func SendRegistrationConfirmation(user *User) (errM *Error) {
 	var body bytes.Buffer
 
-	confirmation := RegistrationConfirmationTemplate{FirstName: user.FirstName, Family: user.Family}
+	confirmation := RegistrationConfirmationTemplate{FirstName: user.FirstName, Family: user.Family, Donation: user.Donation}
 	template := template.Must(template.New("e-mail").Parse(registrationEmail))
 	err := template.Execute(&body, &confirmation)
 	if err != nil {
