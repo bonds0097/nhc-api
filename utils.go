@@ -113,3 +113,12 @@ func IsTokenSet(r *http.Request) bool {
 func GetUserFromToken(db *mgo.Database, tokenData *TokenData) (*User, *Error) {
 	return FindUserById(db, bson.ObjectIdHex(tokenData.ID))
 }
+
+func Contains(slice []string, element string) bool {
+	for _, value := range slice {
+		if value == element {
+			return true
+		}
+	}
+	return false
+}

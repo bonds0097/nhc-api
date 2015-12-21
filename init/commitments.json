@@ -8,8 +8,28 @@
         "title": "How Much Water Do Kids Need?"
     }],
     "commitments": [
-        "I will replace soda with water",
+        "I will replace soda with water.",
         "I will drink half my body weight in ounces of water each day.",
+        "I will drink at least 8 oz. of water with every meal.",
+        "I will replace my whole or 2% milk consumption with 1% or skim.",
+        "I will replace sugar with a zero calorie sweetener in my beverages.",
+        "Other"
+    ]
+}, {
+    "name": "Breakfast",
+    "links": [{
+        "url": "https://www.eatrightpro.org/~/media/eatrightpro files/career/career development/flyers and handouts/ernt_power_up_with_breakfast.ashx",
+        "title": "Quick, Healthful Breakfast Ideas"
+    }, {
+        "url": "http://www.consumerreports.org/cro/magazine/2014/10/why-eating-the-right-breakfast-is-so-important/index.htm",
+        "title": "Why Eating Breakfast is Important"
+    }],
+    "commitments": [
+        "I will wake up 15 min earlier and prepare breakfast; no processed foods.",
+        "I will eat a serving of protein with breakfast every day.",
+        "I will eat one serving of fruit with breakfast each day.",
+        "I will incorporate vegetables into my breakfast every day.",
+        "I will replace sugary cereals with low-sugar cereal options (less than 7 grams of sugar per serving).",
         "Other"
     ]
 }, {
@@ -25,22 +45,45 @@
         "title": "The Benefits of Eating Vegetables!"
     }],
     "commitments": [
-        "I will eat no less than 4 servings of fresh fruits/vegetables each day",
-        "I will eat vegetables with two meals per day",
+        "I will eat no less than 4 servings of fresh fruits/vegetables each day.",
+        "I will eat vegetables with two meals per day.",
+        "I will eat at least two different colored fruits and vegetables each day.",
+        "I will make half my plate fruits and vegetables with at least one meal.",
+        "I will replace fruit juice with whole fruit every day.",
         "Other"
     ]
 }, {
-    "name": "Breakfast",
+    "name": "Grains/Carbohydrate Consumption",
     "links": [{
-        "url": "https://www.eatrightpro.org/~/media/eatrightpro files/career/career development/flyers and handouts/ernt_power_up_with_breakfast.ashx",
-        "title": "Quick, Healthful Breakfast Ideas"
+        "url": "http://www.mayoclinic.org/healthy-lifestyle/nutrition-and-healthy-eating/in-depth/whole-grains/art-20047826",
+        "title": "Whole grains: Hearty options for a healthy diet"
     }, {
-        "url": "http://www.consumerreports.org/cro/magazine/2014/10/why-eating-the-right-breakfast-is-so-important/index.htm",
-        "title": "Why Eating Breakfast is Important"
+        "url": "http://www.hsph.harvard.edu/nutritionsource/carbohydrates/",
+        "title": "The Nutrition Source: Carbohydrates"
     }],
     "commitments": [
-        "I will wake up 15 min earlier and prepare breakfast; no processed foods.",
-        "I will eat a serving of protein with breakfast every day",
+        "I will not eat foods with added sugars (such as high fructose corn syrup).",
+        "I will include whole grains in my breakfast every morning.",
+        "I will replace all refined grain products with whole grains.",
+        "I will ensure I eat at least 25 grams of fiber a day."
+    ]
+}, {
+    "name": "Mindful Eating",
+    "links": [{
+        "url": "http://www.health.harvard.edu/staying-healthy/mindful-eating",
+        "title": "A Starter Kit for Mindful Eating"
+    }, {
+        "url": "http://www.choosemyplate.gov/ten-tips-enjoy-your-food",
+        "title": "Ten Tips to Enjoy Your Food"
+    }],
+    "commitments": [
+        "All meals will have a well-defined beginning and end (no seconds).",
+        "I will say a word of thanks before eating each meal, showing gratitude for what I have.",
+        "I will start a food journal and record all food and beverage consumption.",
+        "I will make a healthy modification with every meal (i.e. baked instead of fried).",
+        "I will eat one meal as a family each day at a table, without distractions (TV, phones, etc).",
+        "I will only eat at the kitchen/dining room table when eating meals.",
+        "I will plan my meals at the beginning of the week. so I don’t resort to eating unhealthy convenience foods.",
         "Other"
     ]
 }, {
@@ -55,22 +98,10 @@
     "commitments": [
         "I will replace empty calorie/processed snacks with fruits and vegetables",
         "I will eat no more than 125 calories after my evening meal",
-        "Other"
-    ]
-}, {
-    "name": "Mindful Eating",
-    "links": [{
-        "url": "http://www.health.harvard.edu/staying-healthy/mindful-eating",
-        "title": "A Starter Kit for Mindful Eating"
-    }, {
-        "url": "http://www.choosemyplate.gov/ten-tips-enjoy-your-food",
-        "title": "Ten Tips to Enjoy Your Food"
-    }],
-    "commitments": [
-        "All meals will have a well-defined beginning and end (no seconds)",
-        "I will say a word of thanks before eating each meal, showing gratitude for what I have",
-        "I will start a food journal and record all food and beverage consumption",
-        "I will make a healthy modification with every meal (i.e. baked instead of fried)",
+        "I will only snack on vegetables after my evening meal.",
+        "Each evening I will prepare snacks for the following day.",
+        "I will limit my snacks to single servings every time I snack to avoid binge eating.",
+        "I will drink at least 16 ounces of water before I eat an after-dinner snack.",
         "Other"
     ]
 }, {

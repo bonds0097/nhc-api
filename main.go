@@ -20,7 +20,10 @@ var (
 	MONGODB_URL = "localhost"
 	MAIL_PORT   = 25
 	ENV         string
+	INIT        bool
+	APP_DIR     string
 	URL         string
+	GLOBALS     *Globals
 )
 
 func init() {
@@ -40,6 +43,8 @@ func init() {
 	}
 
 	flag.StringVar(&ENV, "env", "prod", "Environment to deploy to. Options: prod, test, or dev")
+	flag.BoolVar(&INIT, "init", false, "Initialize the database on startup?")
+	flag.StringVar(&APP_DIR, "dir", "/etc/nhc-api/", "Application directory")
 	flag.Parse()
 }
 
@@ -54,9 +59,28 @@ func main() {
 
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	dbSession := DBConnect(MONGODB_URL)
+
+	if INIT {
+		err := DBInit(dbSession)
+		if err != nil {
+			log.Fatalln(err)
+		}
+	}
+
 	err := DBEnsureIndices(dbSession)
 	if err != nil {
 		log.Fatalf("Error ensuring DB indices: %s\n", err)
+	}
+
+	GLOBALS, err = FindGlobals(dbSession.DB(DBNAME))
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	// This has to happen after globals are loaded.
+	err = DBEnsureIntegrity(dbSession)
+	if err != nil {
+		log.Fatalf("Error ensuring DB integrity: %s\n", err)
 	}
 
 	corsMiddleware := cors.New(cors.Options{
@@ -72,9 +96,14 @@ func main() {
 	router := mux.NewRouter().StrictSlash(true)
 
 	api := router.PathPrefix("/api").Subrouter()
+	api.HandleFunc("/globals", GetGlobals).Methods("GET")
+
 	api.HandleFunc("/commitments", GetCommitments).Methods("GET")
 	api.HandleFunc("/organizations", GetOrganizations).Methods("GET")
 	api.HandleFunc("/registration", RegisterUser).Methods("POST")
+
+	api.HandleFunc("/participant", GetParticipants).Methods("GET")
+	api.HandleFunc("/participant/{id}/scorecard", UpdateScorecard).Methods("PUT")
 
 	authApi := router.PathPrefix("/auth").Subrouter()
 	authApi.HandleFunc("/", GetAuthStatus).Methods("GET")

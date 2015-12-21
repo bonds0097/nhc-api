@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 )
 
 func RegisterUser(w http.ResponseWriter, r *http.Request) {
@@ -31,14 +32,13 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 		}
 
 		type RegistrationData struct {
-			Organization     string        `json:"organization"`
-			Comment          string        `json:"comment"`
-			Donation         string        `json:"donation"`
-			Sharing          string        `json:"sharing"`
-			Participants     []Participant `json:"participants"`
-			Family           bool          `json:"family"`
-			FamilyCode       string        `json:"familyCode"`
-			CustomCommitment bool          `json:"customCommitment,omitempty"`
+			Organization string        `json:"organization"`
+			Comment      string        `json:"comment"`
+			Donation     string        `json:"donation"`
+			Sharing      string        `json:"sharing"`
+			Participants []Participant `json:"participants"`
+			Family       bool          `json:"family"`
+			FamilyCode   string        `json:"familyCode"`
 		}
 
 		decoder := json.NewDecoder(r.Body)
@@ -76,6 +76,36 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 			formIsValid = false
 		}
 
+		// Check comment for profanity.
+		if HasProfanity(registrationData.Comment) {
+			registrationValidation.Comment = append(registrationValidation.Comment, PROFANITY_ERROR)
+			formIsValid = false
+		}
+
+		// Ensure that donation is a valid selection.
+		if registrationData.Donation == "" {
+			registrationValidation.Donation = append(registrationValidation.Donation, REQUIRED_ERROR)
+			formIsValid = false
+		} else if !Contains(DONATIONS, registrationData.Donation) {
+			registrationValidation.Donation = append(registrationValidation.Donation, BAD_CHOICE_ERROR)
+			formIsValid = false
+		}
+
+		// Ensure that sharing is a valid selection.
+		if registrationData.Sharing == "" {
+			registrationValidation.Sharing = append(registrationValidation.Sharing, REQUIRED_ERROR)
+			formIsValid = false
+		} else if !Contains(SHARING, registrationData.Sharing) {
+			registrationValidation.Sharing = append(registrationValidation.Sharing, BAD_CHOICE_ERROR)
+			formIsValid = false
+		}
+
+		// Ensure family code exists.
+		if registrationData.FamilyCode != "" && !FamilyExists(db, strings.ToUpper(registrationData.FamilyCode)) {
+			registrationValidation.FamilyCode = append(registrationValidation.FamilyCode, FAMILY_ERROR)
+			formIsValid = false
+		}
+
 		// At this point, if we have any validation issues, return the validation struct.
 		if !formIsValid {
 			b, err := json.Marshal(registrationValidation)
@@ -96,22 +126,34 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Generate family code if needed.
-
-		// Change user status appropriately.
-		if registrationData.CustomCommitment {
-			user.Status = PENDING.String()
-		} else {
-			user.Status = REGISTERED.String()
-		}
-
 		// Save all data.
 		user.Organization = registrationData.Organization
 		user.Comment = registrationData.Comment
 		user.Donation = registrationData.Donation
 		user.Sharing = registrationData.Sharing
 		user.Participants = registrationData.Participants
-		user.Family = registrationData.FamilyCode
+
+		// Generate family code if needed.
+		if registrationData.Family && registrationData.FamilyCode == "" {
+			familyCode, errM := GenerateFamilyCode(db, user)
+			if errM != nil {
+				HandleModelError(w, r, errM)
+				return
+			}
+			user.Family = familyCode
+		} else {
+			user.Family = registrationData.FamilyCode
+		}
+
+		// Create ID for each participant. Set points and create empty scorecard.
+		for key, _ := range user.Participants {
+			user.Participants[key].ID = key
+			user.Participants[key].Points = 0
+			user.Participants[key].Scorecard = GenerateScorecard()
+		}
+
+		// Change user status appropriately.
+		user.Status = REGISTERED.String()
 
 		errM = user.Save(db)
 		if errM != nil {
