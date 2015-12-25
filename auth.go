@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -121,9 +122,7 @@ func Verify(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user.Status = UNREGISTERED.String()
-	user.Code = ""
-	errM = user.Save(db)
+	errM = user.Verify(db)
 	if errM != nil {
 		HandleModelError(w, r, errM)
 		return
@@ -136,6 +135,33 @@ func Verify(w http.ResponseWriter, r *http.Request) {
 
 	ServeJSON(w, r, &Response{"status": "ok"}, http.StatusOK)
 	return
+}
+
+func ResendVerify(w http.ResponseWriter, r *http.Request) {
+	if IsTokenSet(r) {
+
+		tokenData := GetToken(w, r)
+		db := GetDB(w, r)
+
+		user, errM := GetUserFromToken(db, tokenData)
+		if errM != nil {
+			HandleModelError(w, r, errM)
+			return
+		}
+
+		errM = SendVerificationMail(user)
+		if errM != nil {
+			HandleModelError(w, r, errM)
+			return
+		}
+
+		ServeJSON(w, r, &Response{
+			"status": fmt.Sprintf("Your verification e-mail has been resent to %s.", user.Email)},
+			http.StatusOK)
+	} else {
+		BR(w, r, errors.New("Missing Token. Please log in to continue."), http.StatusUnauthorized)
+		return
+	}
 }
 
 func SetToken(w http.ResponseWriter, r *http.Request, user *User) {

@@ -110,6 +110,7 @@ func main() {
 	authApi.HandleFunc("/login", Login).Methods("POST")
 	authApi.HandleFunc("/signup", SignUp).Methods("POST")
 	authApi.HandleFunc("/verify", Verify).Methods("POST")
+	authApi.HandleFunc("/verify", ResendVerify).Methods("GET")
 	authApi.HandleFunc("/facebook", LoginWithFacebook).Methods("POST")
 	authApi.HandleFunc("/google", LoginWithGoogle).Methods("POST")
 

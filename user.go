@@ -45,6 +45,24 @@ func (u *User) Save(db *mgo.Database) (errM *Error) {
 	return
 }
 
+func (u *User) Verify(db *mgo.Database) (errM *Error) {
+	uC := db.C("users")
+	u.Status = UNREGISTERED.String()
+	errM = u.Save(db)
+	if errM != nil {
+		return
+	}
+
+	update := bson.M{"$unset": bson.M{"code": ""}}
+	err := uC.UpdateId(u.ID, update)
+	if err != nil {
+		errM = &Error{Internal: true, Reason: errors.New(fmt.Sprintf("Failed to remove user's code: %s\n", err))}
+		return
+	}
+
+	return
+}
+
 func NewUser() (u *User) {
 	u = &User{}
 	u.ID = bson.NewObjectId()
