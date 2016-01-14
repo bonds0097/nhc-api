@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -28,6 +29,95 @@ type User struct {
 	Status       string        `bson:"status,omitempty" json:"status,omitempty"`
 	Participants []Participant `bson:"participants,omitempty" json:"participants,omitempty"`
 	Code         string        `bson:"code,omitempty" json:"-"`
+}
+
+type LimitedUser struct {
+	ID           bson.ObjectId `bson:"_id" json:"-"`
+	Email        string        `bson:"email" json:"email"`
+	FirstName    string        `bson:"firstName,omitempty" json:"firstName,omitempty"`
+	LastName     string        `bson:"lastName,omitempty" json:"lastName,omitempty"`
+	Family       string        `bson:"family,omitempty" json:"family,omitempty"`
+	Organization string        `bson:"organization,omitempty" json:"organization,omitempty"`
+	Comment      string        `bson:"comment,omitempty" json:"comment,omitempty"`
+	Role         string        `bson:"role,omitempty" json:"role,omitempty"`
+	Status       string        `bson:"status,omitempty" json:"status,omitempty"`
+}
+
+type UserEditData struct {
+	Email        string `bson:"email" json:"email"`
+	FirstName    string `bson:"firstName,omitempty" json:"firstName,omitempty"`
+	LastName     string `bson:"lastName,omitempty" json:"lastName,omitempty"`
+	Family       string `bson:"family,omitempty" json:"family,omitempty"`
+	Organization string `bson:"organization,omitempty" json:"organization,omitempty"`
+	Role         string `bson:"role,omitempty" json:"role,omitempty"`
+	Status       string `bson:"status,omitempty" json:"status,omitempty"`
+}
+
+func GetUsers(w http.ResponseWriter, r *http.Request) {
+	if !IsAuthorized(w, r, "admin") {
+		return
+	}
+
+	tokenData := GetToken(w, r)
+	if tokenData == nil {
+		return
+	}
+
+	db := GetDB(w, r)
+	user, errM := GetUserFromToken(db, tokenData)
+	if errM != nil {
+		HandleModelError(w, r, errM)
+		return
+	}
+
+	users, errM := FindLimitedUsers(db, user)
+	if errM != nil {
+		HandleModelError(w, r, errM)
+		return
+	}
+
+	b, _ := json.Marshal(users)
+	ServeJSONArray(w, r, string(b), http.StatusOK)
+}
+
+func EditUser(w http.ResponseWriter, r *http.Request) {
+	if !IsAuthorized(w, r, "admin") {
+		return
+	}
+
+	tokenData := GetToken(w, r)
+	if tokenData == nil {
+		return
+	}
+
+	db := GetDB(w, r)
+	callingUser, errM := GetUserFromToken(db, tokenData)
+	if errM != nil {
+		HandleModelError(w, r, errM)
+		return
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	var userEditData UserEditData
+	err := decoder.Decode(&userEditData)
+	if err != nil {
+		BR(w, r, errors.New(PARSE_ERROR), http.StatusBadRequest)
+		return
+	}
+
+	// Only global admins can change a user's role or status.
+	if callingUser.Role != GLOBAL_ADMIN.String() && callingUser.Role != GLOBAL_SUPER_ADMIN.String() {
+		userEditData.Role = ""
+		userEditData.Status = ""
+	}
+
+	errM = UpdateUser(db, &userEditData)
+	if errM != nil {
+		HandleModelError(w, r, errM)
+		return
+	}
+
+	ServeJSON(w, r, &Response{"status": "User successfully updated."}, http.StatusOK)
 }
 
 func (u *User) Save(db *mgo.Database) (errM *Error) {
@@ -66,6 +156,27 @@ func (u *User) Verify(db *mgo.Database) (errM *Error) {
 func NewUser() (u *User) {
 	u = &User{}
 	u.ID = bson.NewObjectId()
+	return
+}
+
+func FindLimitedUsers(db *mgo.Database, u *User) (users []LimitedUser, errM *Error) {
+	c := db.C("users")
+
+	// If user is global admin, return all users. Otherwise just users in the user's org.
+	if u.Role == GLOBAL_ADMIN.String() || u.Role == GLOBAL_SUPER_ADMIN.String() {
+		err := c.Find(nil).All(&users)
+		if err != nil {
+			errM = &Error{Reason: errors.New(fmt.Sprintf("Error retrieving users from DB: %s", err)), Internal: true}
+			return
+		}
+	} else {
+		err := c.Find(bson.M{"organization": u.Organization}).All(&users)
+		if err != nil {
+			errM = &Error{Reason: errors.New(fmt.Sprintf("Error retrieving users from DB: %s", err)), Internal: true}
+			return
+		}
+	}
+
 	return
 }
 
@@ -141,4 +252,14 @@ func FindUserByProvider(db *mgo.Database, provider, sub string) (*User, *Error) 
 
 func FindUserByCode(db *mgo.Database, code string) (*User, *Error) {
 	return FindUserByQuery(db, bson.M{"code": code})
+}
+
+func UpdateUser(db *mgo.Database, u *UserEditData) *Error {
+	c := db.C("users")
+	err := c.Update(bson.M{"email": u.Email}, bson.M{"$set": u})
+	if err != nil {
+		return &Error{Reason: errors.New(fmt.Sprintf("Failed to update user: %s", err)), Internal: true}
+	}
+
+	return nil
 }

@@ -28,10 +28,7 @@ func GetCommitments(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	b, err := json.Marshal(commitments)
-	if err != nil {
-		ISR(w, r, errors.New(fmt.Sprintf("Failed to marshal commitments data: %s", err)))
-	}
+	b, _ := json.Marshal(commitments)
 	ServeJSONArray(w, r, string(b), http.StatusOK)
 }
 

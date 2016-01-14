@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -70,7 +71,7 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 	var userData UserData
 	err := decoder.Decode(&userData)
 	if err != nil {
-		BR(w, r, errors.New("Unable to parse request."), http.StatusBadRequest)
+		BR(w, r, errors.New(PARSE_ERROR), http.StatusBadRequest)
 		return
 	}
 
@@ -206,7 +207,31 @@ func GetAuthStatus(w http.ResponseWriter, r *http.Request) {
 		json.Unmarshal(b, parse)
 		ServeJSON(w, r, parse, http.StatusOK)
 	} else {
-		BR(w, r, errors.New("Missing Token. Please log in to continue."), http.StatusUnauthorized)
+		BR(w, r, errors.New(MISSING_TOKEN_ERROR), http.StatusUnauthorized)
 		return
+	}
+}
+
+func IsAuthorized(w http.ResponseWriter, r *http.Request, role string) bool {
+	if IsTokenSet(r) {
+		tokenData := GetToken(w, r)
+		db := GetDB(w, r)
+
+		user, errM := GetUserFromToken(db, tokenData)
+		if errM != nil {
+			HandleModelError(w, r, errM)
+			return false
+		}
+
+		if strings.Contains(user.Role, role) {
+			return true
+		} else {
+			BR(w, r, errors.New(FORBIDDEN_ERROR), http.StatusForbidden)
+			return false
+		}
+
+	} else {
+		BR(w, r, errors.New(MISSING_TOKEN_ERROR), http.StatusUnauthorized)
+		return false
 	}
 }

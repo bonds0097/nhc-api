@@ -33,9 +33,9 @@ const (
 var roles = [...]string{
 	"user",
 	"org_admin",
-	"org_super_admin",
+	"super_org_admin",
 	"global_admin",
-	"global_super_admin",
+	"super_global_admin",
 }
 
 func (role Role) String() string {

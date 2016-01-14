@@ -99,11 +99,20 @@ func main() {
 	api.HandleFunc("/globals", GetGlobals).Methods("GET")
 
 	api.HandleFunc("/commitments", GetCommitments).Methods("GET")
+
 	api.HandleFunc("/organizations", GetOrganizations).Methods("GET")
+	api.HandleFunc("/admin/organizations", EditOrganization).Methods("PUT")
+	api.HandleFunc("/admin/organizations/{id}", DeleteOrganization).Methods("DELETE")
+	api.HandleFunc("/admin/organizations/merge", MergeOrganizations).Methods("POST")
+
 	api.HandleFunc("/registration", RegisterUser).Methods("POST")
+
+	api.HandleFunc("/admin/user", GetUsers).Methods("GET")
+	api.HandleFunc("/admin/user", EditUser).Methods("PUT")
 
 	api.HandleFunc("/participant", GetParticipants).Methods("GET")
 	api.HandleFunc("/participant/{id}/scorecard", UpdateScorecard).Methods("PUT")
+	api.HandleFunc("/admin/participant", GetParticipantsAdmin).Methods("GET")
 
 	authApi := router.PathPrefix("/auth").Subrouter()
 	authApi.HandleFunc("/", GetAuthStatus).Methods("GET")
