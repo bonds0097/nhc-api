@@ -9,6 +9,7 @@ const (
 	FORBIDDEN_ERROR     = "You are not authorized to access this function."
 	MISSING_TOKEN_ERROR = "Missing Token. Please log in to continue."
 	PARSE_ERROR         = "Failed to parse request."
+	BAD_MESSAGE_ERROR   = "Message is missing required fields."
 )
 
 var (

@@ -32,6 +32,29 @@ func GetOrganizations(w http.ResponseWriter, r *http.Request) {
 	ServeJSONArray(w, r, string(b), http.StatusOK)
 }
 
+func AddOrganization(w http.ResponseWriter, r *http.Request) {
+	if !IsAuthorized(w, r, GLOBAL_ADMIN.String()) {
+		return
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	var org Organization
+	err := decoder.Decode(&org)
+	if err != nil {
+		BR(w, r, errors.New(PARSE_ERROR), http.StatusBadRequest)
+		return
+	}
+
+	db := GetDB(w, r)
+	errM := CreateOrg(db, org.Name, false)
+	if errM != nil {
+		HandleModelError(w, r, errM)
+		return
+	}
+
+	ServeJSON(w, r, &Response{"status": "Organization added."}, http.StatusOK)
+}
+
 func EditOrganization(w http.ResponseWriter, r *http.Request) {
 	// Perform authz check.
 	if !IsAuthorized(w, r, GLOBAL_ADMIN.String()) {

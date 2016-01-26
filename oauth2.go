@@ -173,6 +173,12 @@ func LoginWithFacebook(w http.ResponseWriter, r *http.Request) {
 		}
 
 		log.Println("Made it to User Creation.")
+		// Make sure we have the user's e-mail or error out.
+		if profileData["email"] == nil {
+			BR(w, r, errors.New("You cannot sign up without sharing your email with NHC."), http.StatusNotAcceptable)
+			return
+		}
+
 		// Create user with his facebook id
 		user := NewUser()
 		user.FirstName = profileData["first_name"].(string)

@@ -184,7 +184,9 @@ func DBEnsureIntegrity(s *mgo.Session) error {
 	}
 	for _, user := range registeredUsers {
 		for index, _ := range user.Participants {
-			user.Participants[index].Scorecard = GenerateScorecard()
+			if user.Participants[index].Scorecard == nil {
+				user.Participants[index].Scorecard = GenerateScorecard()
+			}
 		}
 		errM := user.Save(db)
 		if errM != nil {

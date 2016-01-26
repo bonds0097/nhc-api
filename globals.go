@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 )
 
 type Globals struct {
@@ -23,6 +24,45 @@ func GetGlobals(w http.ResponseWriter, r *http.Request) {
 	parse := &Response{}
 	json.Unmarshal(b, parse)
 	ServeJSON(w, r, parse, http.StatusOK)
+}
+
+func SaveGlobals(w http.ResponseWriter, r *http.Request) {
+	if !IsAuthorized(w, r, "global_admin") {
+		return
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	var globals Globals
+	err := decoder.Decode(&globals)
+	if err != nil {
+		BR(w, r, errors.New(PARSE_ERROR), http.StatusBadRequest)
+	}
+	globals.ChallengeLength = globals.ChallengeEnd.YearDay() - globals.ChallengeStart.YearDay() + 1
+
+	db := GetDB(w, r)
+	errM := UpdateGlobals(db, &globals)
+	if errM != nil {
+		HandleModelError(w, r, errM)
+		return
+	}
+
+	GLOBALS = &globals
+
+	b, _ := json.Marshal(GLOBALS)
+	parse := &Response{}
+	json.Unmarshal(b, parse)
+	ServeJSON(w, r, parse, http.StatusOK)
+}
+
+func UpdateGlobals(db *mgo.Database, globals *Globals) (errM *Error) {
+	c := db.C("globals")
+	err := c.Update(nil, bson.M{"$set": globals})
+	if err != nil {
+		errM = &Error{Reason: errors.New(fmt.Sprintf("Error updating globals: %s\n", err))}
+		return
+	}
+
+	return
 }
 
 func FindGlobals(db *mgo.Database) (*Globals, error) {

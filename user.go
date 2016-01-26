@@ -53,6 +53,56 @@ type UserEditData struct {
 	Status       string `bson:"status,omitempty" json:"status,omitempty"`
 }
 
+func UpdateSelf(w http.ResponseWriter, r *http.Request) {
+	tokenData := GetToken(w, r)
+	if tokenData == nil {
+		return
+	}
+
+	db := GetDB(w, r)
+	user, errM := GetUserFromToken(db, tokenData)
+	if errM != nil {
+		HandleModelError(w, r, errM)
+		return
+	}
+
+	type UserUpdateData struct {
+		FirstName    string `json:"firstName,omitempty"`
+		LastName     string `json:"lastName,omitempty"`
+		Organization string `json:"organization,omitempty"`
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	var userUpdateData UserUpdateData
+	err := decoder.Decode(&userUpdateData)
+	if err != nil {
+		BR(w, r, errors.New(PARSE_ERROR), http.StatusBadRequest)
+		return
+	}
+
+	if userUpdateData.FirstName != "" {
+		user.FirstName = userUpdateData.FirstName
+	}
+
+	if userUpdateData.LastName != "" {
+		user.LastName = userUpdateData.LastName
+	}
+
+	// Changing your organization resets your role to user.
+	if userUpdateData.Organization != "" {
+		user.Organization = userUpdateData.Organization
+		user.Role = USER.String()
+	}
+
+	errM = user.Save(db)
+	if errM != nil {
+		HandleModelError(w, r, errM)
+		return
+	}
+
+	ServeJSON(w, r, &Response{"status": "User profile updated successfully."}, http.StatusOK)
+}
+
 func GetUsers(w http.ResponseWriter, r *http.Request) {
 	if !IsAuthorized(w, r, "admin") {
 		return

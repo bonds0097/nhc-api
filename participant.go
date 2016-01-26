@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -72,7 +73,56 @@ func GetParticipantsAdmin(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateScorecard(w http.ResponseWriter, r *http.Request) {
+	tokenData := GetToken(w, r)
+	if tokenData == nil {
+		return
+	}
 
+	type ScorecardData struct {
+		ID        int     `bson:"id", json:"id"`
+		Scorecard [][]int `bson:"scorecard", json:"scorecard"`
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	var scorecardData ScorecardData
+	err := decoder.Decode(&scorecardData)
+	if err != nil {
+		BR(w, r, errors.New(PARSE_ERROR), http.StatusBadRequest)
+		return
+	}
+
+	db := GetDB(w, r)
+	user, errM := GetUserFromToken(db, tokenData)
+	if errM != nil {
+		HandleModelError(w, r, errM)
+		return
+	}
+
+	// Validate scorecard and update points.
+	currentDay := time.Now().YearDay() - GLOBALS.ChallengeStart.YearDay()
+	points := 0
+	for i, week := range scorecardData.Scorecard {
+		for j, day := range week {
+			if i*7+j > currentDay {
+				scorecardData.Scorecard[i][j], day = 0, 0
+			} else if day > 0 {
+				scorecardData.Scorecard[i][j], day = 1, 1
+			} else {
+				scorecardData.Scorecard[i][j], day = 0, 0
+			}
+			points += day
+		}
+	}
+	user.Participants[scorecardData.ID].Points = points
+
+	user.Participants[scorecardData.ID].Scorecard = scorecardData.Scorecard
+	errM = user.Save(db)
+	if errM != nil {
+		HandleModelError(w, r, errM)
+		return
+	}
+
+	ServeJSON(w, r, &Response{"status": "Scorecard updated successfully."}, http.StatusOK)
 }
 
 func GenerateScorecard() (scorecard [][]int) {

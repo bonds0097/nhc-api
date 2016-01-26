@@ -7,6 +7,7 @@ import (
 	"os"
 	"runtime"
 	"strconv"
+	"time"
 
 	"github.com/codegangsta/negroni"
 	"github.com/gorilla/mux"
@@ -86,6 +87,7 @@ func main() {
 	corsMiddleware := cors.New(cors.Options{
 		AllowedOrigins: []string{
 			"http://localhost:8081",
+			"https://nutritionhabitchallenge.com",
 			"https://www.nutritionhabitchallenge.com",
 			"https://test.nutritionhabitchallenge.com"},
 		AllowCredentials: true,
@@ -97,21 +99,26 @@ func main() {
 
 	api := router.PathPrefix("/api").Subrouter()
 	api.HandleFunc("/globals", GetGlobals).Methods("GET")
+	api.HandleFunc("/globals", SaveGlobals).Methods("POST")
 
 	api.HandleFunc("/commitments", GetCommitments).Methods("GET")
 
 	api.HandleFunc("/organizations", GetOrganizations).Methods("GET")
+	api.HandleFunc("/admin/organizations", AddOrganization).Methods("POST")
 	api.HandleFunc("/admin/organizations", EditOrganization).Methods("PUT")
 	api.HandleFunc("/admin/organizations/{id}", DeleteOrganization).Methods("DELETE")
 	api.HandleFunc("/admin/organizations/merge", MergeOrganizations).Methods("POST")
 
 	api.HandleFunc("/registration", RegisterUser).Methods("POST")
 
+	api.HandleFunc("/user", UpdateSelf).Methods("PUT")
 	api.HandleFunc("/admin/user", GetUsers).Methods("GET")
 	api.HandleFunc("/admin/user", EditUser).Methods("PUT")
 
+	api.HandleFunc("/admin/message", SendMessage).Methods("POST")
+
 	api.HandleFunc("/participant", GetParticipants).Methods("GET")
-	api.HandleFunc("/participant/{id}/scorecard", UpdateScorecard).Methods("PUT")
+	api.HandleFunc("/participant/scorecard", UpdateScorecard).Methods("PUT")
 	api.HandleFunc("/admin/participant", GetParticipantsAdmin).Methods("GET")
 
 	authApi := router.PathPrefix("/auth").Subrouter()
@@ -132,19 +139,19 @@ func main() {
 	n.UseHandler(router)
 
 	// Start the servers based on whether or not HTTPS is enabled.
+	s := &http.Server{
+		Addr:           ":4433",
+		Handler:        n,
+		ReadTimeout:    30 * time.Second,
+		WriteTimeout:   30 * time.Second,
+		MaxHeaderBytes: 1 << 20,
+	}
+
 	if ENV == "prod" || ENV == "test" {
 		log.Println("HTTPS is enabled. Starting server on Port 4433.")
-
-		err := http.ListenAndServeTLS(":4433", "/var/private/nhc_cert.pem", "/var/private/nhc_key.pem", n)
-		if err != nil {
-			log.Fatalf("HTTPS Error: %s\n", err)
-		}
+		log.Fatal(s.ListenAndServeTLS("/var/private/nhc_cert.pem", "/var/private/nhc_key.pem"))
 	} else {
 		log.Println("HTTPS is not enabled. Starting server on Port 4433.")
-
-		err := http.ListenAndServe(":4433", n)
-		if err != nil {
-			log.Fatalf("HTTPS Error: %s\n", err)
-		}
+		log.Fatal(s.ListenAndServe())
 	}
 }
