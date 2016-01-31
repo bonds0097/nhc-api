@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"log"
+	"os"
 
 	"gopkg.in/gomail.v2"
 )
@@ -48,12 +50,23 @@ func SendMail(recipient string, subject string, body string) (errM *Error) {
 	m.SetHeader("Subject", subject)
 	m.SetBody("text/html", body)
 
+	f, err := os.OpenFile("/etc/nhc-api/log/mail.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalf("error opening file: %v\n", err)
+	}
+	defer f.Close()
+	mailLog := log.New(f, "mail: ", log.LstdFlags)
+
 	d := gomail.Dialer{Host: "localhost", Port: MAIL_PORT}
 	d.TLSConfig = &tls.Config{InsecureSkipVerify: true}
-	if err := d.DialAndSend(m); err != nil {
+	if err = d.DialAndSend(m); err != nil {
+		mailLog.Printf("Error sending mail to %s: %s\n", recipient, err)
 		errM = &Error{Internal: true, Reason: errors.New(fmt.Sprintf("Error sending mail: %s\n", err))}
 		return
 	}
+
+	mailLog.Printf("Sent mail to %s with subject: %s\n", recipient, subject)
+
 	return nil
 }
 

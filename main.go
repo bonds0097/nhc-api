@@ -17,7 +17,7 @@ import (
 const DBNAME = "nhc"
 
 var (
-	PORT        = ":4433"
+	PORT        string
 	MONGODB_URL = "localhost"
 	MAIL_PORT   = 25
 	ENV         string
@@ -28,9 +28,6 @@ var (
 )
 
 func init() {
-	if p := os.Getenv("PORT"); p != "" {
-		PORT = ":" + p
-	}
 	if m := os.Getenv("MONGODB_URL"); m != "" {
 		MONGODB_URL = m
 	}
@@ -43,6 +40,7 @@ func init() {
 		MAIL_PORT = port
 	}
 
+	flag.StringVar(&PORT, "port", ":443", "Port to run on.")
 	flag.StringVar(&ENV, "env", "prod", "Environment to deploy to. Options: prod, test, or dev")
 	flag.BoolVar(&INIT, "init", false, "Initialize the database on startup?")
 	flag.StringVar(&APP_DIR, "dir", "/etc/nhc-api/", "Application directory")
@@ -51,7 +49,7 @@ func init() {
 
 func main() {
 	if ENV == "prod" {
-		URL = "www.nutritionhabitchallenge.com"
+		URL = "api.nutritionhabitchallenge.com"
 	} else if ENV == "test" {
 		URL = "test.nutritionhabitchallenge.com"
 	} else {
@@ -140,7 +138,7 @@ func main() {
 
 	// Start the servers based on whether or not HTTPS is enabled.
 	s := &http.Server{
-		Addr:           ":4433",
+		Addr:           PORT,
 		Handler:        n,
 		ReadTimeout:    30 * time.Second,
 		WriteTimeout:   30 * time.Second,
@@ -148,10 +146,10 @@ func main() {
 	}
 
 	if ENV == "prod" || ENV == "test" {
-		log.Println("HTTPS is enabled. Starting server on Port 4433.")
-		log.Fatal(s.ListenAndServeTLS("/var/private/nhc_cert.pem", "/var/private/nhc_key.pem"))
+		log.Printf("HTTPS is enabled. Starting server on Port %s\n", PORT)
+		log.Fatal(s.ListenAndServeTLS("/var/private/nhc_api_cert.pem", "/var/private/nhc_api_key.pem"))
 	} else {
-		log.Println("HTTPS is not enabled. Starting server on Port 4433.")
+		log.Printf("HTTPS is not enabled. Starting server on Port %s\n", PORT)
 		log.Fatal(s.ListenAndServe())
 	}
 }
