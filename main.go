@@ -127,6 +127,8 @@ func main() {
 	authApi.HandleFunc("/verify", ResendVerify).Methods("GET")
 	authApi.HandleFunc("/facebook", LoginWithFacebook).Methods("POST")
 	authApi.HandleFunc("/google", LoginWithGoogle).Methods("POST")
+	authApi.HandleFunc("/password/forgot", ForgotPassword).Methods("POST")
+	authApi.HandleFunc("/password/reset", ResetPassword).Methods("POST")
 
 	n := negroni.Classic()
 	n.Use(HeaderMiddleware())

@@ -43,6 +43,20 @@ const registrationEmail = `
 <p>Sincerely,<br />The NHC Team</p>
 `
 
+type ResetPasswordTemplate struct {
+	FirstName string
+	Code      string
+}
+
+const resetPasswordEmail = `
+<p>Hi {{.FirstName}},<p>
+<p>We received a request to reset the password on this account at <a href="https://nutritionhabitchallenge.com">https://nutritionhabitchallenge.com</a><p>
+<p>To reset your password, use the following link: <a href="https://nutritionhabitchallenge.com/reset-password/{{.Code}}">https://nutritionhabitchallenge.com/reset-password/{{.Code}}</a></p>
+<p>If you did not make this request, please ignore this e-mail.</p>
+<p>Sincerely,<br />
+The NHC Team</p>
+`
+
 func SendMail(recipient string, subject string, body string) (errM *Error) {
 	m := gomail.NewMessage()
 	m.SetHeader("From", "do-not-reply@nutritionhabitchallenge.com")
@@ -97,5 +111,20 @@ func SendRegistrationConfirmation(user *User) (errM *Error) {
 	}
 
 	return SendMail(user.Email, "Nutrition Habit Challenge: Registration Confirmation",
+		string(body.Bytes()))
+}
+
+func SendResetPasswordMail(user *User) (errM *Error) {
+	var body bytes.Buffer
+
+	resetPassword := ResetPasswordTemplate{FirstName: user.FirstName, Code: user.ResetCode}
+	template := template.Must(template.New("e-mail").Parse(resetPasswordEmail))
+	err := template.Execute(&body, &resetPassword)
+	if err != nil {
+		errM = &Error{Reason: errors.New(fmt.Sprintf("Error executing template: %s\n", err)), Internal: true}
+		return
+	}
+
+	return SendMail(user.Email, "Nutrition Habit Challenge: Reset Password Request",
 		string(body.Bytes()))
 }

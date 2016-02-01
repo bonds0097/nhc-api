@@ -165,6 +165,84 @@ func ResendVerify(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func ForgotPassword(w http.ResponseWriter, r *http.Request) {
+	type Message struct {
+		Email string `json:"email"`
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	var message Message
+	err := decoder.Decode(&message)
+	if err != nil {
+		BR(w, r, errors.New("Unable to parse request."), http.StatusBadRequest)
+		return
+	}
+
+	db := GetDB(w, r)
+	user, errM := FindUserByEmail(db, message.Email)
+	if errM != nil {
+		ServeJSON(w, r, &Response{"status": "ok"}, http.StatusOK)
+		return
+	}
+
+	// Generate code and save in DB. Then send email to user.
+	code, _ := GenerateConfirmationCode()
+	user.ResetCode = code
+	errM = user.Save(db)
+	if errM != nil {
+		ServeJSON(w, r, &Response{"status": "ok"}, http.StatusOK)
+		return
+	}
+
+	go SendResetPasswordMail(user)
+
+	ServeJSON(w, r, &Response{"status": "ok"}, http.StatusOK)
+}
+
+func ResetPassword(w http.ResponseWriter, r *http.Request) {
+	type Message struct {
+		Code            string `json:"code"`
+		NewPassword     string `json:"newPassword"`
+		ConfirmPassword string `json:"confirmPassword"`
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	var message Message
+	err := decoder.Decode(&message)
+	if err != nil {
+		BR(w, r, errors.New("Unable to parse request."), http.StatusBadRequest)
+		return
+	}
+
+	db := GetDB(w, r)
+	user, errM := FindUserByResetCode(db, message.Code)
+	if errM != nil {
+		HandleModelError(w, r, errM)
+		return
+	}
+
+	// Make sure passwords match.
+	if message.NewPassword != message.ConfirmPassword {
+		BR(w, r, errors.New("Passwords do not match."), http.StatusBadRequest)
+		return
+	}
+
+	// Update user.
+	errM = ChangePassword(db, user, message.NewPassword)
+	if errM != nil {
+		HandleModelError(w, r, errM)
+		return
+	}
+
+	if !IsTokenSet(r) {
+		SetToken(w, r, user)
+		return
+	}
+
+	ServeJSON(w, r, &Response{"status": "ok"}, http.StatusOK)
+	return
+}
+
 func SetToken(w http.ResponseWriter, r *http.Request, user *User) {
 	t := jwt.New(jwt.GetSigningMethod("RS256"))
 	t.Claims["ID"] = user.ID.Hex()

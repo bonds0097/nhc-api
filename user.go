@@ -28,6 +28,7 @@ type User struct {
 	Role         string        `bson:"role,omitempty" json:"role,omitempty"`
 	Status       string        `bson:"status,omitempty" json:"status,omitempty"`
 	Participants []Participant `bson:"participants,omitempty" json:"participants,omitempty"`
+	ResetCode    string        `bson:"resetCode,omitempty" json:"-"`
 	Code         string        `bson:"code,omitempty" json:"-"`
 }
 
@@ -302,6 +303,38 @@ func FindUserByProvider(db *mgo.Database, provider, sub string) (*User, *Error) 
 
 func FindUserByCode(db *mgo.Database, code string) (*User, *Error) {
 	return FindUserByQuery(db, bson.M{"code": code})
+}
+
+func FindUserByResetCode(db *mgo.Database, code string) (*User, *Error) {
+	return FindUserByQuery(db, bson.M{"resetCode": code})
+}
+
+func FindUserByEmail(db *mgo.Database, email string) (*User, *Error) {
+	return FindUserByQuery(db, bson.M{"email": email})
+}
+
+func ChangePassword(db *mgo.Database, u *User, password string) (errM *Error) {
+	c := db.C("users")
+	pwHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return &Error{Reason: errors.New("Couldn't hash password."), Internal: true}
+	}
+	u.Password = string(pwHash)
+	u.ResetCode = ""
+
+	errM = u.Save(db)
+	if errM != nil {
+		return errM
+	}
+
+	update := bson.M{"$unset": bson.M{"resetCode": ""}}
+	err = c.UpdateId(u.ID, update)
+	if err != nil {
+		errM = &Error{Internal: true, Reason: errors.New(fmt.Sprintf("Failed to remove user's reset code: %s\n", err))}
+		return
+	}
+
+	return
 }
 
 func UpdateUser(db *mgo.Database, u *UserEditData) *Error {
