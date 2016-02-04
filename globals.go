@@ -12,11 +12,13 @@ import (
 )
 
 type Globals struct {
-	ChallengeStart   time.Time `bson:"challengeStart,omitempty" json:"challengeStart,omitempty"`
-	ChallengeEnd     time.Time `bson:"challengeEnd,omitempty" json:"challengeEnd,omitempty"`
-	ChallengeLength  int       `bson:"challengeLength,omitempty" json:"challengeLength,omitempty"`
-	RegistrationOpen bool      `bson:"registrationOpen,omitempty" json:"registrationOpen,omitempty"`
-	ScorecardEnabled bool      `bson:"scorecardEnabled,omitempty" json:"scorecardEnabled,omitempty"`
+	ChallengeStart      time.Time `bson:"challengeStart,omitempty" json:"challengeStart,omitempty"`
+	ChallengeEnd        time.Time `bson:"challengeEnd,omitempty" json:"challengeEnd,omitempty"`
+	ChallengeLength     int       `bson:"challengeLength,omitempty" json:"challengeLength,omitempty"`
+	RegistrationOpen    bool      `bson:"registrationOpen,omitempty" json:"registrationOpen,omitempty"`
+	ScorecardEnabled    bool      `bson:"scorecardEnabled,omitempty" json:"scorecardEnabled,omitempty"`
+	LeaderboardsEnabled bool      `bson:"leaderboardsEnabled,omitempty" json:"leaderboardsEmpty,omitempy"`
+	WelcomeMessage      string    `bson:"welcomeMessage,omitempty" json:"welcomeMessage,omitempty"`
 }
 
 func GetGlobals(w http.ResponseWriter, r *http.Request) {

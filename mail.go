@@ -6,8 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
-	"log"
-	"os"
 
 	"gopkg.in/gomail.v2"
 )
@@ -50,12 +48,32 @@ type ResetPasswordTemplate struct {
 
 const resetPasswordEmail = `
 <p>Hi {{.FirstName}},<p>
-<p>We received a request to reset the password on this account at <a href="https://nutritionhabitchallenge.com">https://nutritionhabitchallenge.com</a><p>
-<p>To reset your password, use the following link: <a href="https://nutritionhabitchallenge.com/reset-password/{{.Code}}">https://nutritionhabitchallenge.com/reset-password/{{.Code}}</a></p>
+<p>We received a request to reset the password on this account at <a href="https://www.nutritionhabitchallenge.com">https://www.nutritionhabitchallenge.com</a><p>
+<p>To reset your password, use the following link: <a href="https://www.nutritionhabitchallenge.com/reset-password/{{.Code}}">https://www.nutritionhabitchallenge.com/reset-password/{{.Code}}</a></p>
 <p>If you did not make this request, please ignore this e-mail.</p>
 <p>Sincerely,<br />
 The NHC Team</p>
 `
+
+func SendBulkMail(recipients []string, subject string, body string) (errM *Error) {
+	m := gomail.NewMessage()
+	m.SetHeader("From", "do-not-reply@nutritionhabitchallenge.com")
+	m.SetHeader("Bcc", recipients...)
+	m.SetHeader("Subject", subject)
+	m.SetBody("text/html", body)
+
+	d := gomail.Dialer{Host: "localhost", Port: MAIL_PORT}
+	d.TLSConfig = &tls.Config{InsecureSkipVerify: true}
+	if err := d.DialAndSend(m); err != nil {
+		MAIL_LOG.Printf("Error sending mail to multiple recipients: %s\n", err)
+		errM = &Error{Internal: true, Reason: errors.New(fmt.Sprintf("Error sending mail: %s\n", err))}
+		return
+	}
+
+	MAIL_LOG.Printf("Sent mail to multiple recipients with subject: %s\n", subject)
+
+	return nil
+}
 
 func SendMail(recipient string, subject string, body string) (errM *Error) {
 	m := gomail.NewMessage()
@@ -64,22 +82,15 @@ func SendMail(recipient string, subject string, body string) (errM *Error) {
 	m.SetHeader("Subject", subject)
 	m.SetBody("text/html", body)
 
-	f, err := os.OpenFile("/etc/nhc-api/log/mail.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		log.Fatalf("error opening file: %v\n", err)
-	}
-	defer f.Close()
-	mailLog := log.New(f, "mail: ", log.LstdFlags)
-
 	d := gomail.Dialer{Host: "localhost", Port: MAIL_PORT}
 	d.TLSConfig = &tls.Config{InsecureSkipVerify: true}
-	if err = d.DialAndSend(m); err != nil {
-		mailLog.Printf("Error sending mail to %s: %s\n", recipient, err)
+	if err := d.DialAndSend(m); err != nil {
+		MAIL_LOG.Printf("Error sending mail to %s: %s\n", recipient, err)
 		errM = &Error{Internal: true, Reason: errors.New(fmt.Sprintf("Error sending mail: %s\n", err))}
 		return
 	}
 
-	mailLog.Printf("Sent mail to %s with subject: %s\n", recipient, subject)
+	MAIL_LOG.Printf("Sent mail to %s with subject: %s\n", recipient, subject)
 
 	return nil
 }

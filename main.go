@@ -25,6 +25,7 @@ var (
 	APP_DIR     string
 	URL         string
 	GLOBALS     *Globals
+	MAIL_LOG    *log.Logger
 )
 
 func init() {
@@ -40,7 +41,7 @@ func init() {
 		MAIL_PORT = port
 	}
 
-	flag.StringVar(&PORT, "port", ":443", "Port to run on.")
+	flag.StringVar(&PORT, "port", "8443", "Port to run on.")
 	flag.StringVar(&ENV, "env", "prod", "Environment to deploy to. Options: prod, test, or dev")
 	flag.BoolVar(&INIT, "init", false, "Initialize the database on startup?")
 	flag.StringVar(&APP_DIR, "dir", "/etc/nhc-api/", "Application directory")
@@ -59,6 +60,14 @@ func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	dbSession := DBConnect(MONGODB_URL)
 
+	// Loggers
+	f, err := os.OpenFile("/etc/nhc-api/log/mail.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalf("error opening file: %v\n", err)
+	}
+	defer f.Close()
+	MAIL_LOG = log.New(f, "mail: ", log.LstdFlags)
+
 	if INIT {
 		err := DBInit(dbSession)
 		if err != nil {
@@ -66,7 +75,7 @@ func main() {
 		}
 	}
 
-	err := DBEnsureIndices(dbSession)
+	err = DBEnsureIndices(dbSession)
 	if err != nil {
 		log.Fatalf("Error ensuring DB indices: %s\n", err)
 	}
@@ -140,7 +149,7 @@ func main() {
 
 	// Start the servers based on whether or not HTTPS is enabled.
 	s := &http.Server{
-		Addr:           PORT,
+		Addr:           ":" + PORT,
 		Handler:        n,
 		ReadTimeout:    30 * time.Second,
 		WriteTimeout:   30 * time.Second,

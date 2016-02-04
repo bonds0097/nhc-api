@@ -70,9 +70,7 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for _, recipient := range recipients {
-		go SendMail(recipient, message.Subject, message.Body)
-	}
+	go SendBulkMail(recipients, message.Subject, message.Body)
 
 	ServeJSON(w, r, &Response{"status": "Messages sent."}, http.StatusOK)
 }
