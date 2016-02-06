@@ -124,6 +124,13 @@ func main() {
 
 	api.HandleFunc("/admin/message", SendMessage).Methods("POST")
 
+	api.HandleFunc("/news", FetchNews).Methods("GET")
+	api.HandleFunc("/admin/news", ListNews).Methods("GET")
+	api.HandleFunc("/admin/news", AddNews).Methods("POST")
+	api.HandleFunc("/admin/news/{id}", DeleteNews).Methods("DELETE")
+	api.HandleFunc("/admin/news/{id}/publish", PublishNews).Methods("PUT")
+	api.HandleFunc("/admin/news/{id}/unpublish", UnpublishNews).Methods("PUT")
+
 	api.HandleFunc("/participant", GetParticipants).Methods("GET")
 	api.HandleFunc("/participant/scorecard", UpdateScorecard).Methods("PUT")
 	api.HandleFunc("/admin/participant", GetParticipantsAdmin).Methods("GET")
