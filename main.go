@@ -131,6 +131,14 @@ func main() {
 	api.HandleFunc("/admin/news/{id}/publish", PublishNews).Methods("PUT")
 	api.HandleFunc("/admin/news/{id}/unpublish", UnpublishNews).Methods("PUT")
 
+	api.HandleFunc("/bonus-question", FetchQuestion).Methods("GET")
+	api.HandleFunc("/bonus-question", AnswerQuestion).Methods("POST")
+	api.HandleFunc("/admin/bonus-question", GetQuestions).Methods("GET")
+	api.HandleFunc("/admin/bonus-question", CreateQuestion).Methods("POST")
+	api.HandleFunc("/admin/bonus-question/{id}/", DeleteQuestion).Methods("DELETE")
+	api.HandleFunc("/admin/bonus-question/{id}/enable", EnableQuestion).Methods("PUT")
+	api.HandleFunc("/admin/bonus-question/disable", DisableQuestion).Methods("PUT")
+
 	api.HandleFunc("/participant", GetParticipants).Methods("GET")
 	api.HandleFunc("/participant/scorecard", UpdateScorecard).Methods("PUT")
 	api.HandleFunc("/admin/participant", GetParticipantsAdmin).Methods("GET")
