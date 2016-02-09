@@ -253,6 +253,11 @@ func SetToken(w http.ResponseWriter, r *http.Request, user *User) {
 		ISR(w, r, err)
 		return
 	}
+
+	db := GetDB(w, r)
+	user.LastLogin = time.Now()
+	user.Save(db)
+
 	ServeJSON(w, r, &Response{"token": tokenString}, http.StatusOK)
 	return
 }

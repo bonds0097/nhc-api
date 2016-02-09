@@ -19,7 +19,7 @@ type News struct {
 	Body        string        `bson:"body" json:"body"`
 	Published   bool          `bson:"published" json:"published,omitempty"`
 	PublishDate time.Time     `bson:"publishDate,omitempty" json:"publishDate,omitempty"`
-	AdminOnly   bool          `bson:"adminOnly,omitempty" json:"adminOnly,omitempty"`
+	AdminOnly   bool          `bson:"adminOnly" json:"adminOnly,omitempty"`
 }
 
 func FetchNews(w http.ResponseWriter, r *http.Request) {

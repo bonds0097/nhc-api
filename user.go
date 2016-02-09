@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/mgo.v2"
@@ -30,6 +31,8 @@ type User struct {
 	Participants []Participant `bson:"participants,omitempty" json:"participants,omitempty"`
 	ResetCode    string        `bson:"resetCode,omitempty" json:"-"`
 	Code         string        `bson:"code,omitempty" json:"-"`
+	CreatedOn    time.Time     `bson:"createdOn,omitempty" json:"createdOn,omitempty"`
+	LastLogin    time.Time     `bson:"lastLogin,omitempty" json:"lastLogin,omitempty"`
 }
 
 type LimitedUser struct {
@@ -42,6 +45,7 @@ type LimitedUser struct {
 	Comment      string        `bson:"comment,omitempty" json:"comment,omitempty"`
 	Role         string        `bson:"role,omitempty" json:"role,omitempty"`
 	Status       string        `bson:"status,omitempty" json:"status,omitempty"`
+	LastLogin    time.Time     `bson:"lastLogin,omitempty" json:"lastLogin,omitempty"`
 }
 
 type UserEditData struct {
@@ -239,6 +243,8 @@ func CreateUser(db *mgo.Database, u *User) *Error {
 	}
 	u.Password = string(pwHash)
 	u.ID = bson.NewObjectId()
+	u.CreatedOn = time.Now()
+	u.LastLogin = time.Now()
 	err = uC.Insert(u)
 	if mgo.IsDup(err) {
 		return &Error{Reason: errors.New("User already exists. Please log in instead."), Internal: false, Code: 409}
@@ -263,8 +269,8 @@ func AuthUser(db *mgo.Database, email, password string) (*User, *Error) {
 	if err != nil {
 		return nil, &Error{Reason: errors.New("Incorrect password"), Internal: false, Code: http.StatusUnauthorized}
 	}
-	return user, nil
 
+	return user, nil
 }
 
 func FindUserByQuery(db *mgo.Database, query bson.M) (*User, *Error) {

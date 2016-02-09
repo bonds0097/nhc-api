@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/google/go-querystring/query"
 	"github.com/parnurzeal/gorequest"
@@ -188,6 +189,7 @@ func LoginWithFacebook(w http.ResponseWriter, r *http.Request) {
 		user.Picture = "https://graph.facebook.com/v2.5/" + profileData["id"].(string) + "/picture?type=large"
 		user.Role = USER.String()
 		user.Status = UNREGISTERED.String()
+		user.CreatedOn = time.Now()
 		errM = user.Save(db)
 		if errM != nil {
 			HandleModelError(w, r, errM)
@@ -319,6 +321,7 @@ func LoginWithGoogle(w http.ResponseWriter, r *http.Request) {
 		user.Email = profileData["email"].(string)
 		user.Picture = strings.Replace(profileData["picture"].(string), "sz=50", "sz=200", -1)
 		user.Role = USER.String()
+		user.CreatedOn = time.Now()
 		if b, err := strconv.ParseBool(profileData["email_verified"].(string)); err == nil && b {
 			user.Status = UNREGISTERED.String()
 		} else {
