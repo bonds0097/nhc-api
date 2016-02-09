@@ -56,21 +56,27 @@ The NHC Team</p>
 `
 
 func SendBulkMail(recipients []string, subject string, body string) (errM *Error) {
-	m := gomail.NewMessage()
-	m.SetHeader("From", "do-not-reply@nutritionhabitchallenge.com")
-	m.SetHeader("Bcc", recipients...)
-	m.SetHeader("Subject", subject)
-	m.SetBody("text/html", body)
+	for i := 0; i < len(recipients); i += 500 {
+		j := i + 500
+		if j > len(recipients) {
+			j = len(recipients)
+		}
+		m := gomail.NewMessage()
+		m.SetHeader("From", "do-not-reply@nutritionhabitchallenge.com")
+		m.SetHeader("Bcc", recipients[i:j]...)
+		m.SetHeader("Subject", subject)
+		m.SetBody("text/html", body)
 
-	d := gomail.Dialer{Host: "localhost", Port: MAIL_PORT}
-	d.TLSConfig = &tls.Config{InsecureSkipVerify: true}
-	if err := d.DialAndSend(m); err != nil {
-		MAIL_LOG.Printf("Error sending mail to multiple recipients: %s\n", err)
-		errM = &Error{Internal: true, Reason: errors.New(fmt.Sprintf("Error sending mail: %s\n", err))}
-		return
+		d := gomail.Dialer{Host: "localhost", Port: MAIL_PORT}
+		d.TLSConfig = &tls.Config{InsecureSkipVerify: true}
+		if err := d.DialAndSend(m); err != nil {
+			MAIL_LOG.Printf("Error sending mail to %d recipients: %s\n", j-i, err)
+			errM = &Error{Internal: true, Reason: errors.New(fmt.Sprintf("Error sending mail: %s\n", err))}
+			return
+		}
 	}
 
-	MAIL_LOG.Printf("Sent mail to multiple recipients with subject: %s\n", subject)
+	MAIL_LOG.Printf("Sent mail to %d recipients with subject: %s\n", len(recipients), subject)
 
 	return nil
 }

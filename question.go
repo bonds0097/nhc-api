@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -103,10 +102,10 @@ func AnswerQuestion(w http.ResponseWriter, r *http.Request) {
 
 	if question == nil || question.AnsweredBy(user) {
 		BR(w, r, errors.New(FORBIDDEN_ERROR), http.StatusForbidden)
+		return
 	}
 
 	var answeredCorrectly bool
-	log.Printf("Comparing %s and %s", question.CorrectAnswer, data.Answer)
 	if question.CorrectAnswer == data.Answer {
 		answeredCorrectly = true
 	} else {
