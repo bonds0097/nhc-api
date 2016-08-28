@@ -33,6 +33,7 @@ var (
 )
 
 func init() {
+	log.Println("Parsing flags...")
 	if m := os.Getenv("MONGODB_URL"); m != "" {
 		MONGODB_URL = m
 	}
