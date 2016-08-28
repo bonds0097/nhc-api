@@ -16,6 +16,7 @@ import (
 )
 
 func DBConnect(address string) *mgo.Session {
+	log.Printf("Attempting to connect to mongodb server at: %s", address)
 	session, err := mgo.Dial(address)
 	if err != nil {
 		panic(err)
