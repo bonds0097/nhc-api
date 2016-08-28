@@ -2,6 +2,8 @@
 # and a workspace (GOPATH) configured at /go.
 FROM golang:latest
 
+# Generate RSA keys for token signing.
+
 # Get Glide
 RUN curl https://glide.sh/get | sh
 

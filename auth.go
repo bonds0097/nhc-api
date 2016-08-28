@@ -4,30 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
-	"log"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
 )
-
-const (
-	privateKey = "/var/private/nhc.rsa"
-)
-
-var (
-	signKey []byte
-)
-
-func init() {
-	var err error
-	signKey, err = ioutil.ReadFile(privateKey)
-	if err != nil {
-		log.Fatalf("Error reading Private Key: %s\n", err)
-	}
-}
 
 func Login(w http.ResponseWriter, r *http.Request) {
 	type UserData struct {

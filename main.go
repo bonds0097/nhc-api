@@ -16,6 +16,8 @@ import (
 
 const DBNAME = "nhc"
 
+var ()
+
 var (
 	PORT        string
 	MONGODB_URL = "localhost"
@@ -26,6 +28,8 @@ var (
 	URL         string
 	GLOBALS     *Globals
 	MAIL_LOG    *log.Logger
+	verifyKey   []byte
+	signKey     []byte
 )
 
 func init() {
@@ -40,6 +44,15 @@ func init() {
 		}
 		MAIL_PORT = port
 	}
+
+	pub := os.Getenv("JWT_PUB_KEY")
+	priv := os.Getenv("JWT_PRIV_KEY")
+	if pub == "" || priv == "" {
+		log.Fatalln("Key pair for JWT signing not supplied.")
+	}
+
+	verifyKey = []byte(pub)
+	signKey = []byte(priv)
 
 	flag.StringVar(&PORT, "port", "8443", "Port to run on.")
 	flag.StringVar(&ENV, "env", "prod", "Environment to deploy to. Options: prod, test, or dev")

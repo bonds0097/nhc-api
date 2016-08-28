@@ -2,31 +2,16 @@ package main
 
 import (
 	"errors"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"strings"
 
+	"gopkg.in/mgo.v2"
+
 	"github.com/codegangsta/negroni"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/context"
-	"gopkg.in/mgo.v2"
 )
-
-const publicKey = "/var/private/nhc.rsa.pub"
-
-var (
-	verifyKey []byte
-)
-
-func init() {
-	var err error
-	verifyKey, err = ioutil.ReadFile(publicKey)
-	if err != nil {
-		log.Fatalf("Error reading Public key: %s\n", err)
-		return
-	}
-}
 
 func HeaderMiddleware() negroni.Handler {
 	return negroni.HandlerFunc(func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
