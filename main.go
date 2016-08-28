@@ -74,12 +74,7 @@ func main() {
 	dbSession := DBConnect(MONGODB_URL)
 
 	// Loggers
-	f, err := os.OpenFile("/etc/nhc-api/log/mail.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		log.Fatalf("error opening file: %v\n", err)
-	}
-	defer f.Close()
-	MAIL_LOG = log.New(f, "mail: ", log.LstdFlags)
+	MAIL_LOG = log.New(os.Stdout, "mail: ", log.LstdFlags)
 
 	if INIT {
 		err := DBInit(dbSession)
@@ -88,7 +83,7 @@ func main() {
 		}
 	}
 
-	err = DBEnsureIndices(dbSession)
+	err := DBEnsureIndices(dbSession)
 	if err != nil {
 		log.Fatalf("Error ensuring DB indices: %s\n", err)
 	}
