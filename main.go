@@ -49,7 +49,7 @@ func init() {
 	pub := os.Getenv("JWT_PUB_KEY")
 	priv := os.Getenv("JWT_PRIV_KEY")
 	if pub == "" || priv == "" {
-		log.Fatalln("Key pair for JWT signing not supplied.")
+		log.Println("Key pair for JWT signing not supplied.")
 	}
 
 	verifyKey = []byte(pub)
@@ -82,6 +82,8 @@ func main() {
 		if err != nil {
 			log.Fatalln(err)
 		}
+	} else {
+		log.Println("WTF")
 	}
 
 	err := DBEnsureIndices(dbSession)

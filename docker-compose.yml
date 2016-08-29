@@ -1,0 +1,11 @@
+mongo:
+  image: 'mongo:latest'
+nhc-api:
+  build: .
+  entrypoint: /go/bin/nhc-api -env=dev -init=true
+  environment:
+    - MONGODB_URL=mongo
+  links:
+    - mongo
+  ports:
+    - '8080:8443'
