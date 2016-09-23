@@ -154,6 +154,11 @@ func main() {
 	api.HandleFunc("/participant/scorecard", UpdateScorecard).Methods("PUT")
 	api.HandleFunc("/admin/participant", GetParticipantsAdmin).Methods("GET")
 
+	api.HandleFunc("/faq", GetFaqs).Methods("GET")
+	api.HandleFunc("/admin/faq", AddFaq).Methods("POST")
+	api.HandleFunc("/admin/faq", EditFaq).Methods("PUT")
+	api.HandleFunc("/admin/faq/{id}", DeleteFaq).Methods("DELETE")
+
 	authApi := router.PathPrefix("/auth").Subrouter()
 	authApi.HandleFunc("/", GetAuthStatus).Methods("GET")
 	authApi.HandleFunc("/login", Login).Methods("POST")
