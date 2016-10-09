@@ -1,0 +1,9 @@
+[{
+    "question": "What is the First FAQ?",
+    "answer": "This is the First question.",
+    "category": "Question category 1"
+}, {
+    "question": "What is the Second FAQ?",
+    "answer": "This is the Second question.",
+    "category": "Question category 2"
+}]

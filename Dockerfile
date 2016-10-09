@@ -8,6 +8,7 @@ RUN mkdir $APP_DIR
 
 COPY init/commitments.json $APP_DIR
 COPY init/organizations.json $APP_DIR
+COPY init/faqs.json $APP_DIR
 
 # Copy the local package files to the container's workspace.
 COPY . /go/src/github.com/bonds0097/nhc-api
