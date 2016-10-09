@@ -20,11 +20,6 @@ type FAQ struct {
 
 // GetFaqs gets and returns all frequently asked questions
 func GetFaqs(w http.ResponseWriter, r *http.Request) {
-	tokenData := GetToken(w, r)
-	if tokenData == nil {
-		return
-	}
-
 	db := GetDB(w, r)
 	faqs, errM := FindAllFaqs(db)
 	if errM != nil {
