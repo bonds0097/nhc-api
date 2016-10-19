@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	// "log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -221,7 +220,6 @@ func LoginWithGoogle(w http.ResponseWriter, r *http.Request) {
 		End()
 
 	ctx.WithField("code", res.StatusCode).Info("Status Code.")
-	// log.Printf("Status Code: %d\n", res.StatusCode)
 	if res.StatusCode != 200 {
 		var errorData map[string]interface{}
 		json.Unmarshal([]byte(body), &errorData)
@@ -247,13 +245,11 @@ func LoginWithGoogle(w http.ResponseWriter, r *http.Request) {
 	u.RawQuery = qs.Encode()
 	urlStr := fmt.Sprintf("%v", u)
 	ctx.WithField("url", urlStr).Info("Url String.")
-	// log.Printf("URL: %s\n", urlStr)
 	resProfile, body, _ := gorequest.New().Get(urlStr).End()
 
 	var profileData map[string]interface{}
 	err = json.Unmarshal([]byte(body), &profileData)
 	ctx.WithField("code", resProfile.StatusCode).Info("Status Code.")
-	// log.Printf("Status Code: %d\n", resProfile.StatusCode)
 	if resProfile.StatusCode != 200 {
 		ServeJSON(w, r, &Response{
 			"message": profileData["error"].(map[string]interface{})["message"],
@@ -261,7 +257,6 @@ func LoginWithGoogle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ctx.WithField("profile", profileData).Info("Profile Data.")
-	// log.Printf("Profile Data: %s\n", profileData)
 
 	db := GetDB(w, r)
 	ctx.Println("End of Step 2.")

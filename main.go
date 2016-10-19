@@ -10,8 +10,7 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/bshuster-repo/logrus-logstash-hook"
-	"github.com/urfave/negroni"
-	// "github.com/codegangsta/negroni"
+	"github.com/codegangsta/negroni"
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
 )
@@ -45,6 +44,9 @@ func init() {
 	ctx := logger.WithFields(logrus.Fields{
 		"method": "init",
 	})
+
+	log.Println("---- MZ ADD --log--")
+	ctx.Println("---- MZ ADD --ctx--")
 
 	ctx.Println("Parsing flags...")
 	if m := os.Getenv("MONGODB_URL"); m != "" {

@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"log"
 	"net/http"
 	"strings"
 
@@ -47,7 +46,6 @@ func JWTMiddleware() negroni.Handler {
 				default:
 					ISR(w, r, errors.New(vErr.Error()))
 					ctx.Println(vErr.Error())
-					// log.Println(vErr.Error())
 					return
 				}
 			default:

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	// "log"
 	"net/http"
 	"strings"
 )
@@ -48,7 +47,6 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			BR(w, r, errors.New("Could not parse request data."), http.StatusBadRequest)
 			ctx.WithError(err).WithField("error", err).Error("Error parsing JSON request.")
-			// log.Printf("Error parsing JSON request: %s\n", err)
 			return
 		}
 

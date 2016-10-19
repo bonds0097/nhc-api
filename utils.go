@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/dgrijalva/jwt-go"
@@ -64,7 +63,6 @@ func ISR(w http.ResponseWriter, r *http.Request, msg error) {
 	ctx := logger.WithField("method", "ISR")
 	w.WriteHeader(http.StatusInternalServerError)
 	ctx.WithError(msg).WithField("error", msg).Error("Internal Server Error.")
-	// log.Printf("Internal Server Error: %s\n", msg)
 }
 
 func BR(w http.ResponseWriter, r *http.Request, msg error, code int) {

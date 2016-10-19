@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	// "log"
 	"os"
 	"os/signal"
 	"path"
@@ -18,7 +17,6 @@ import (
 func DBConnect(address string) *mgo.Session {
 	ctx := logger.WithField("method", "DBConnect")
 	ctx.WithField("address", address).Info("Attempting to connect to mongodb server.")
-	// log.Printf("Attempting to connect to mongodb server at: %s", address)
 	session, err := mgo.Dial(address)
 	if err != nil {
 		panic(err)
@@ -31,7 +29,6 @@ func DBConnect(address string) *mgo.Session {
 	go func() {
 		for sig := range c {
 			ctx.WithField("signal", sig).Info("Signal captured - Closing database connection.")
-			// log.Println("%v captured - Closing database connection", sig)
 			session.Close()
 			os.Exit(1)
 		}
@@ -120,8 +117,7 @@ func DBInit(s *mgo.Session) error {
 	// Import Commitments
 	commitments, err := ioutil.ReadFile(path.Join(APP_DIR, "commitments.json"))
 	if err != nil {
-		ctx.WithError(err).Fatal("Failed to read organizations file.")
-		// log.Fatalf("Failed to read organizations file: %s\n", err)
+		ctx.WithError(err).Fatal("Failed to read commitments file.")
 	}
 
 	var commits []Commitment
@@ -180,7 +176,6 @@ func DBEnsureIntegrity(s *mgo.Session) error {
 
 	if changeInfo != nil {
 		ctx.WithField("updated", changeInfo.Updated).Info("Updated users from pending to registered.")
-		// log.Printf("Updated %d users from pending to registered.\n", changeInfo.Updated)
 	} else {
 		ctx.Println("No users updated from pending to registered.")
 	}
