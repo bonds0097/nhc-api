@@ -45,9 +45,6 @@ func init() {
 		"method": "init",
 	})
 
-	log.Println("---- MZ ADD --log--")
-	ctx.Println("---- MZ ADD --ctx--")
-
 	ctx.Println("Parsing flags...")
 	if m := os.Getenv("MONGODB_URL"); m != "" {
 		MONGODB_URL = m
