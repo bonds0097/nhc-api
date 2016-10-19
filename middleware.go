@@ -23,6 +23,7 @@ func HeaderMiddleware() negroni.Handler {
 }
 
 func JWTMiddleware() negroni.Handler {
+	ctx := logger.WithField("method", "JWTMiddleware")
 	return negroni.HandlerFunc(func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 		if h := r.Header.Get("Authorization"); h != "" {
 			token, err := jwt.ParseFromRequest(r, func(token *jwt.Token) (interface{}, error) {
@@ -45,7 +46,8 @@ func JWTMiddleware() negroni.Handler {
 					return
 				default:
 					ISR(w, r, errors.New(vErr.Error()))
-					log.Println(vErr.Error())
+					ctx.Println(vErr.Error())
+					// log.Println(vErr.Error())
 					return
 				}
 			default:

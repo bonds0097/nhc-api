@@ -10,7 +10,8 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/bshuster-repo/logrus-logstash-hook"
-	"github.com/codegangsta/negroni"
+	"github.com/urfave/negroni"
+	// "github.com/codegangsta/negroni"
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
 )

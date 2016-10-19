@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
+	// "log"
 	"os"
 	"os/signal"
 	"path"
@@ -16,7 +16,9 @@ import (
 )
 
 func DBConnect(address string) *mgo.Session {
-	log.Printf("Attempting to connect to mongodb server at: %s", address)
+	ctx := logger.WithField("method", "DBConnect")
+	ctx.WithField("address", address).Info("Attempting to connect to mongodb server.")
+	// log.Printf("Attempting to connect to mongodb server at: %s", address)
 	session, err := mgo.Dial(address)
 	if err != nil {
 		panic(err)
@@ -28,7 +30,8 @@ func DBConnect(address string) *mgo.Session {
 	signal.Notify(c, os.Interrupt)
 	go func() {
 		for sig := range c {
-			log.Println("%v captured - Closing database connection", sig)
+			ctx.WithField("signal", sig).Info("Signal captured - Closing database connection.")
+			// log.Println("%v captured - Closing database connection", sig)
 			session.Close()
 			os.Exit(1)
 		}
@@ -89,7 +92,8 @@ func DBEnsureIndices(s *mgo.Session) (err error) {
 }
 
 func DBInit(s *mgo.Session) error {
-	log.Println("*** Performing Database initialization. ***")
+	ctx := logger.WithField("method", "DBInit")
+	ctx.Println("*** Performing Database initialization. ***")
 	db := s.DB(DBNAME)
 
 	// Import Organizations
@@ -116,7 +120,8 @@ func DBInit(s *mgo.Session) error {
 	// Import Commitments
 	commitments, err := ioutil.ReadFile(path.Join(APP_DIR, "commitments.json"))
 	if err != nil {
-		log.Fatalf("Failed to read organizations file: %s\n", err)
+		ctx.WithError(err).Fatal("Failed to read organizations file.")
+		// log.Fatalf("Failed to read organizations file: %s\n", err)
 	}
 
 	var commits []Commitment
@@ -150,7 +155,7 @@ func DBInit(s *mgo.Session) error {
 		return errors.New(fmt.Sprintf("Failed to write globals to DB: %s\n", err))
 	}
 
-	log.Println("*** Database initialization complete. ***")
+	ctx.Println("*** Database initialization complete. ***")
 
 	return nil
 	// TODO: Import Resources
@@ -158,7 +163,8 @@ func DBInit(s *mgo.Session) error {
 
 // Basic data integrity checks and clean-up.
 func DBEnsureIntegrity(s *mgo.Session) error {
-	log.Println("*** Performing Database integrity checks. ***")
+	ctx := logger.WithField("method", "DBEnsureIntegrity")
+	ctx.Println("*** Performing Database integrity checks. ***")
 	db := s.DB(DBNAME)
 
 	c := db.C("users")
@@ -173,9 +179,10 @@ func DBEnsureIntegrity(s *mgo.Session) error {
 	}
 
 	if changeInfo != nil {
-		log.Printf("Updated %d users from pending to registered.\n", changeInfo.Updated)
+		ctx.WithField("updated", changeInfo.Updated).Info("Updated users from pending to registered.")
+		// log.Printf("Updated %d users from pending to registered.\n", changeInfo.Updated)
 	} else {
-		log.Println("No users updated from pending to registered.")
+		ctx.Println("No users updated from pending to registered.")
 	}
 	// Ensure every participant has a scorecard.
 	var registeredUsers []User
@@ -195,6 +202,6 @@ func DBEnsureIntegrity(s *mgo.Session) error {
 		}
 	}
 
-	log.Println("*** Database integrity checks complete. ***")
+	ctx.Println("*** Database integrity checks complete. ***")
 	return nil
 }
