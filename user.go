@@ -22,6 +22,7 @@ type User struct {
 	Organization string        `bson:"organization,omitempty" json:"organization,omitempty"`
 	Sharing      string        `bson:"sharing,omitempty" json:"sharing,omitempty"`
 	Comment      string        `bson:"comment,omitempty" json:"comment,omitempty"`
+	Referral     string        `bson:"referral,omitempty" json:"referral,omitempty"`
 	Donation     string        `bson:"donation,omitempty" json:"donation,omitempty"`
 	Picture      string        `bson:"picture,omitempty" json:"picture,omitempty"`
 	Facebook     string        `bson:"facebook,omitempty" json:"facebook,omitempty"`
@@ -43,6 +44,7 @@ type LimitedUser struct {
 	Family       string        `bson:"family,omitempty" json:"family,omitempty"`
 	Organization string        `bson:"organization,omitempty" json:"organization,omitempty"`
 	Comment      string        `bson:"comment,omitempty" json:"comment,omitempty"`
+	Referral     string        `bson:"referral,omitempty" json:"referral,omitempty"`
 	Role         string        `bson:"role,omitempty" json:"role,omitempty"`
 	Status       string        `bson:"status,omitempty" json:"status,omitempty"`
 	LastLogin    time.Time     `bson:"lastLogin,omitempty" json:"lastLogin,omitempty"`
