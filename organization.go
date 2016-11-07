@@ -17,6 +17,16 @@ type Organization struct {
 	NeedsApproval bool          `bson:"needsApproval" json:"needsApproval"`
 }
 
+func OrganizationExists(db *mgo.Database, org string) bool {
+	c := db.C("organizations")
+	count, _ := c.Find(bson.M{"name": org}).Limit(1).Count()
+	if count > 0 {
+		return true
+	} else {
+		return false
+	}
+}
+
 func GetOrganizations(w http.ResponseWriter, r *http.Request) {
 	db := GetDB(w, r)
 	organizations, errM := FindOrganizations(db)
