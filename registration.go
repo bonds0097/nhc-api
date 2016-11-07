@@ -132,13 +132,6 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Try and create new org. We don't worry about dup errors.
-		errM = CreateOrg(db, registrationData.Organization, true)
-		if errM != nil {
-			HandleModelError(w, r, errM)
-			return
-		}
-
 		// Save all data.
 		user.Organization = registrationData.Organization
 		user.Comment = registrationData.Comment
