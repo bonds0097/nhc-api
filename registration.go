@@ -113,6 +113,12 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 			formIsValid = false
 		}
 
+		// Ensure Organization exists.
+		if registrationData.Organization != "" && !OrganizationExists(db, strings.ToUpper(registrationData.Organization)) {
+			registrationValidation.Organization = append(registrationValidation.Organization, ORGANIZATION_ERROR)
+			formIsValid = false
+		}
+
 		// At this point, if we have any validation issues, return the validation struct.
 		if !formIsValid {
 			b, err := json.Marshal(registrationValidation)
@@ -123,13 +129,6 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 			parse := &Response{}
 			json.Unmarshal(b, parse)
 			ServeJSON(w, r, parse, http.StatusBadRequest)
-			return
-		}
-
-		// Try and create new org. We don't worry about dup errors.
-		errM = CreateOrg(db, registrationData.Organization, true)
-		if errM != nil {
-			HandleModelError(w, r, errM)
 			return
 		}
 
