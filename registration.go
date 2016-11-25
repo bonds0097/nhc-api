@@ -33,6 +33,7 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 
 		type RegistrationData struct {
 			Organization string        `json:"organization"`
+			Team         string        `json:"team"`
 			Comment      string        `json:"comment"`
 			Referral     string        `json:"referral"`
 			Donation     string        `json:"donation"`
@@ -54,6 +55,7 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 		// Validate all data.
 		type RegistrationValidation struct {
 			Organization []string `json:"organization,omitempty"`
+			Team         []string `json:"team,omitempty"`
 			Comment      []string `json:"comment,omitempty"`
 			Referral     []string `json:"referral,omitempty"`
 			Donation     []string `json:"donation,omitempty"`
@@ -78,11 +80,18 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 			formIsValid = false
 		}
 
+		// Check team for profanity.
+		if HasProfanity(registrationData.Team) {
+			registrationValidation.Team = append(registrationValidation.Team, PROFANITY_ERROR)
+			formIsValid = false
+		}
+
 		// Check comment for profanity.
 		if HasProfanity(registrationData.Comment) {
 			registrationValidation.Comment = append(registrationValidation.Comment, PROFANITY_ERROR)
 			formIsValid = false
 		}
+
 		// Check referral for profanity.
 		if HasProfanity(registrationData.Referral) {
 			registrationValidation.Referral = append(registrationValidation.Referral, PROFANITY_ERROR)
@@ -134,6 +143,7 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 
 		// Save all data.
 		user.Organization = registrationData.Organization
+		user.Team = registrationData.Team
 		user.Comment = registrationData.Comment
 		user.Referral = registrationData.Referral
 		user.Donation = registrationData.Donation
