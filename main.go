@@ -2,13 +2,14 @@ package main
 
 import (
 	"flag"
-	"log"
 	"net/http"
 	"os"
 	"runtime"
 	"strconv"
 	"time"
 
+	"github.com/Sirupsen/logrus"
+	"github.com/bshuster-repo/logrus-logstash-hook"
 	"github.com/codegangsta/negroni"
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
@@ -16,7 +17,9 @@ import (
 
 const DBNAME = "nhc"
 
-var ()
+var (
+	logger *logrus.Logger
+)
 
 var (
 	PORT        string
@@ -27,13 +30,22 @@ var (
 	APP_DIR     string
 	URL         string
 	GLOBALS     *Globals
-	MAIL_LOG    *log.Logger
 	verifyKey   []byte
 	signKey     []byte
 )
 
 func init() {
-	log.Println("Parsing flags...")
+	logger = logrus.New()
+	hook, err := logrus_logstash.NewHook("udp", os.Getenv("LOGSTASH_ADDR"), "nhc-api")
+	if err != nil {
+		logger.WithError(err).Fatal("Failed to set up logstash hook.")
+	}
+	logger.Hooks.Add(hook)
+	ctx := logger.WithFields(logrus.Fields{
+		"method": "init",
+	})
+
+	ctx.Println("Parsing flags...")
 	if m := os.Getenv("MONGODB_URL"); m != "" {
 		MONGODB_URL = m
 	}
@@ -41,7 +53,7 @@ func init() {
 	if s := os.Getenv("MAIL_PORT"); s != "" {
 		port, err := strconv.Atoi(s)
 		if err != nil {
-			log.Fatalln("Could not read Mail Port from environment.")
+			ctx.Fatalln("Could not read Mail Port from environment.")
 		}
 		MAIL_PORT = port
 	}
@@ -49,7 +61,7 @@ func init() {
 	pub := os.Getenv("JWT_PUB_KEY")
 	priv := os.Getenv("JWT_PRIV_KEY")
 	if pub == "" || priv == "" {
-		log.Println("Key pair for JWT signing not supplied.")
+		ctx.Println("Key pair for JWT signing not supplied.")
 	}
 
 	verifyKey = []byte(pub)
@@ -63,6 +75,10 @@ func init() {
 }
 
 func main() {
+	ctx := logger.WithFields(logrus.Fields{
+		"method": "main",
+	})
+
 	if ENV == "prod" {
 		URL = "api.nutritionhabitchallenge.com"
 	} else if ENV == "test" {
@@ -74,32 +90,27 @@ func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	dbSession := DBConnect(MONGODB_URL)
 
-	// Loggers
-	MAIL_LOG = log.New(os.Stdout, "mail: ", log.LstdFlags)
-
 	if INIT {
 		err := DBInit(dbSession)
 		if err != nil {
-			log.Fatalln(err)
+			ctx.WithError(err).Fatal("Failed to initialize DB.")
 		}
-	} else {
-		log.Println("WTF")
 	}
 
 	err := DBEnsureIndices(dbSession)
 	if err != nil {
-		log.Fatalf("Error ensuring DB indices: %s\n", err)
+		ctx.WithError(err).Fatalf("Error ensuring DB indices.")
 	}
 
 	GLOBALS, err = FindGlobals(dbSession.DB(DBNAME))
 	if err != nil {
-		log.Fatalln(err)
+		ctx.Fatalln(err)
 	}
 
 	// This has to happen after globals are loaded.
 	err = DBEnsureIntegrity(dbSession)
 	if err != nil {
-		log.Fatalf("Error ensuring DB integrity: %s\n", err)
+		ctx.WithError(err).Fatalf("Error ensuring DB integrity.")
 	}
 
 	corsMiddleware := cors.New(cors.Options{
@@ -159,16 +170,16 @@ func main() {
 	api.HandleFunc("/admin/faq", EditFaq).Methods("PUT")
 	api.HandleFunc("/admin/faq/{id}", DeleteFaq).Methods("DELETE")
 
-	authApi := router.PathPrefix("/auth").Subrouter()
-	authApi.HandleFunc("/", GetAuthStatus).Methods("GET")
-	authApi.HandleFunc("/login", Login).Methods("POST")
-	authApi.HandleFunc("/signup", SignUp).Methods("POST")
-	authApi.HandleFunc("/verify", Verify).Methods("POST")
-	authApi.HandleFunc("/verify", ResendVerify).Methods("GET")
-	authApi.HandleFunc("/facebook", LoginWithFacebook).Methods("POST")
-	authApi.HandleFunc("/google", LoginWithGoogle).Methods("POST")
-	authApi.HandleFunc("/password/forgot", ForgotPassword).Methods("POST")
-	authApi.HandleFunc("/password/reset", ResetPassword).Methods("POST")
+	authAPI := router.PathPrefix("/auth").Subrouter()
+	authAPI.HandleFunc("/", GetAuthStatus).Methods("GET")
+	authAPI.HandleFunc("/login", Login).Methods("POST")
+	authAPI.HandleFunc("/signup", SignUp).Methods("POST")
+	authAPI.HandleFunc("/verify", Verify).Methods("POST")
+	authAPI.HandleFunc("/verify", ResendVerify).Methods("GET")
+	authAPI.HandleFunc("/facebook", LoginWithFacebook).Methods("POST")
+	authAPI.HandleFunc("/google", LoginWithGoogle).Methods("POST")
+	authAPI.HandleFunc("/password/forgot", ForgotPassword).Methods("POST")
+	authAPI.HandleFunc("/password/reset", ResetPassword).Methods("POST")
 
 	n := negroni.Classic()
 	n.Use(HeaderMiddleware())
@@ -188,10 +199,10 @@ func main() {
 	}
 
 	if ENV == "prod" || ENV == "test" {
-		log.Printf("HTTPS is enabled. Starting server on Port %s\n", PORT)
-		log.Fatal(s.ListenAndServeTLS("/var/private/nhc_api_cert.pem", "/var/private/nhc_api_key.pem"))
+		ctx.WithField("port", PORT).Info("Starting NHC-API server with HTTPS enabled.")
+		ctx.Fatal(s.ListenAndServeTLS("/var/private/nhc_api_cert.pem", "/var/private/nhc_api_key.pem"))
 	} else {
-		log.Printf("HTTPS is not enabled. Starting server on Port %s\n", PORT)
-		log.Fatal(s.ListenAndServe())
+		ctx.WithField("port", PORT).Info("Starting NHC-API server without HTTPS enabled.")
+		ctx.Fatal(s.ListenAndServe())
 	}
 }

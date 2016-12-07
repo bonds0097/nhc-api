@@ -56,6 +56,7 @@ The NHC Team</p>
 `
 
 func SendBulkMail(recipients []string, subject string, body string) (errM *Error) {
+	ctx := logger.WithField("method", "SendBulkMail")
 	for i := 0; i < len(recipients); i += 500 {
 		j := i + 500
 		if j > len(recipients) {
@@ -70,18 +71,20 @@ func SendBulkMail(recipients []string, subject string, body string) (errM *Error
 		d := gomail.Dialer{Host: "localhost", Port: MAIL_PORT}
 		d.TLSConfig = &tls.Config{InsecureSkipVerify: true}
 		if err := d.DialAndSend(m); err != nil {
-			MAIL_LOG.Printf("Error sending mail to %d recipients: %s\n", j-i, err)
+			ctx.WithError(err).WithField("recipients", j-i).Error("Error sending bulk mail.")
 			errM = &Error{Internal: true, Reason: errors.New(fmt.Sprintf("Error sending mail: %s\n", err))}
 			return
 		}
 	}
 
-	MAIL_LOG.Printf("Sent mail to %d recipients with subject: %s\n", len(recipients), subject)
+	ctx.WithField("recipients", len(recipients)).WithField("subject", subject).
+		Info("Sent bulk mail successfully.")
 
 	return nil
 }
 
 func SendMail(recipient string, subject string, body string) (errM *Error) {
+	ctx := logger.WithField("method", "SendMail")
 	m := gomail.NewMessage()
 	m.SetHeader("From", "do-not-reply@nutritionhabitchallenge.com")
 	m.SetHeader("To", recipient)
@@ -91,12 +94,12 @@ func SendMail(recipient string, subject string, body string) (errM *Error) {
 	d := gomail.Dialer{Host: "localhost", Port: MAIL_PORT}
 	d.TLSConfig = &tls.Config{InsecureSkipVerify: true}
 	if err := d.DialAndSend(m); err != nil {
-		MAIL_LOG.Printf("Error sending mail to %s: %s\n", recipient, err)
+		ctx.WithError(err).WithField("recipient", recipient).Error("Error sending mail.")
 		errM = &Error{Internal: true, Reason: errors.New(fmt.Sprintf("Error sending mail: %s\n", err))}
 		return
 	}
 
-	MAIL_LOG.Printf("Sent mail to %s with subject: %s\n", recipient, subject)
+	ctx.WithField("recipient", recipient).WithField("subject", subject).Info("Successfully sent mail.")
 
 	return nil
 }

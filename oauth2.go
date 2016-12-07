@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -64,6 +63,7 @@ func newGoogleParams() *OAuth2Params {
 }
 
 func LoginWithFacebook(w http.ResponseWriter, r *http.Request) {
+	ctx := logger.WithField("method", "LoginWithFacebook")
 	apiUrl := "https://graph.facebook.com"
 	accessTokenPath := "/v2.5/oauth/access_token"
 	graphApiPath := "/v2.5/me"
@@ -83,13 +83,13 @@ func LoginWithFacebook(w http.ResponseWriter, r *http.Request) {
 	if res.StatusCode != 200 {
 		var errorData map[string]interface{}
 		json.Unmarshal([]byte(body), &errorData)
-		log.Println(errorData)
+		ctx.Println(errorData)
 		ServeJSON(w, r, &Response{
 			"message": errorData["error"].(map[string]interface{})["message"],
 		}, 500)
 		return
 	}
-	log.Println("Made it to Step 2.")
+	ctx.Println("Made it to Step 2.")
 	// Step 2. Retrieve profile information about the current user.
 	var atData accessTokenData
 	err := json.Unmarshal([]byte(body), &atData)
@@ -119,7 +119,7 @@ func LoginWithFacebook(w http.ResponseWriter, r *http.Request) {
 
 	db := GetDB(w, r)
 	if IsTokenSet(r) {
-		log.Println("Made it to Step 3a.")
+		ctx.Println("Made it to Step 3a.")
 		// Step 3a. Link user accounts.
 		existingUser, errM := FindUserByProvider(db, "facebook", profileData["id"].(string))
 		if existingUser != nil {
@@ -161,7 +161,7 @@ func LoginWithFacebook(w http.ResponseWriter, r *http.Request) {
 
 		SetToken(w, r, user)
 	} else {
-		log.Println("Made it to Step 3b.")
+		ctx.Println("Made it to Step 3b.")
 		// Step 3b. Create a new user account or return an existing one.
 		existingUser, errM := FindUserByProvider(db, "facebook", profileData["id"].(string))
 		if existingUser != nil {
@@ -173,7 +173,7 @@ func LoginWithFacebook(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		log.Println("Made it to User Creation.")
+		ctx.Println("Made it to User Creation.")
 		// Make sure we have the user's e-mail or error out.
 		if profileData["email"] == nil {
 			BR(w, r, errors.New("You cannot sign up without sharing your email with NHC."), http.StatusNotAcceptable)
@@ -196,12 +196,13 @@ func LoginWithFacebook(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		log.Println("Made it to setting token.")
+		ctx.Println("Made it to setting token.")
 		SetToken(w, r, user)
 	}
 }
 
 func LoginWithGoogle(w http.ResponseWriter, r *http.Request) {
+	ctx := logger.WithField("method", "LoginWithGoogle")
 
 	accessTokenUrl := "https://accounts.google.com/o/oauth2/token"
 	peopleApiUrl := "https://www.googleapis.com"
@@ -218,7 +219,7 @@ func LoginWithGoogle(w http.ResponseWriter, r *http.Request) {
 		Type("form").
 		End()
 
-	log.Printf("Status Code: %d\n", res.StatusCode)
+	ctx.WithField("code", res.StatusCode).Info("Status Code.")
 	if res.StatusCode != 200 {
 		var errorData map[string]interface{}
 		json.Unmarshal([]byte(body), &errorData)
@@ -228,7 +229,7 @@ func LoginWithGoogle(w http.ResponseWriter, r *http.Request) {
 		}, 500)
 		return
 	}
-	log.Println("End of Step 1.")
+	ctx.Println("End of Step 1.")
 	// Step 2. Retrieve profile information about the current user.
 	var atData accessTokenData
 	err := json.Unmarshal([]byte(body), &atData)
@@ -243,22 +244,22 @@ func LoginWithGoogle(w http.ResponseWriter, r *http.Request) {
 	u.Path = peopleApiPath
 	u.RawQuery = qs.Encode()
 	urlStr := fmt.Sprintf("%v", u)
-	log.Printf("URL: %s\n", urlStr)
+	ctx.WithField("url", urlStr).Info("Url String.")
 	resProfile, body, _ := gorequest.New().Get(urlStr).End()
 
 	var profileData map[string]interface{}
 	err = json.Unmarshal([]byte(body), &profileData)
-	log.Printf("Status Code: %d\n", resProfile.StatusCode)
+	ctx.WithField("code", resProfile.StatusCode).Info("Status Code.")
 	if resProfile.StatusCode != 200 {
 		ServeJSON(w, r, &Response{
 			"message": profileData["error"].(map[string]interface{})["message"],
 		}, 500)
 		return
 	}
-	log.Printf("Profile Data: %s\n", profileData)
+	ctx.WithField("profile", profileData).Info("Profile Data.")
 
 	db := GetDB(w, r)
-	log.Println("End of Step 2.")
+	ctx.Println("End of Step 2.")
 	if IsTokenSet(r) {
 		// Step 3a. Link user accounts.
 		existingUser, errM := FindUserByProvider(db, "google", profileData["sub"].(string))

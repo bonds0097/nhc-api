@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -23,13 +22,14 @@ func AddSpaces(input string) (output string) {
 }
 
 func QueryGoogleProfanityFilter(query string) (isProfane bool) {
+	ctx := logger.WithField("method", "QueryGoogleProfanityFilter")
 	type ApiResponse struct {
 		Response string `json:"response"`
 	}
 
 	resp, err := http.Get(PROFANITY_URL + url.QueryEscape(query))
 	if err != nil {
-		log.Printf("Error querying Google Profanity Filter, look into it: %s\n", err)
+		ctx.WithError(err).WithField("error", err).Error("Error querying Google Profanity Filter.")
 		return false
 	}
 	decoder := json.NewDecoder(resp.Body)
@@ -37,13 +37,13 @@ func QueryGoogleProfanityFilter(query string) (isProfane bool) {
 	var response ApiResponse
 	err = decoder.Decode(&response)
 	if err != nil {
-		log.Printf("Error parsing Google's response, look into it: %s\n", err)
+		ctx.WithError(err).WithField("error", err).Error("Error parsing Google's response.")
 		return false
 	}
 
 	isProfane, err = strconv.ParseBool(response.Response)
 	if err != nil {
-		log.Printf("Error parsing Google's response, look into it: %s\n", err)
+		ctx.WithError(err).WithField("error", err).Error("Error parsing Google's response.")
 		return false
 	}
 

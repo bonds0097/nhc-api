@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/dgrijalva/jwt-go"
@@ -61,12 +60,15 @@ func HandleModelError(w http.ResponseWriter, r *http.Request, errM *Error) {
 }
 
 func ISR(w http.ResponseWriter, r *http.Request, msg error) {
+	ctx := logger.WithField("method", "ISR")
 	w.WriteHeader(http.StatusInternalServerError)
-	log.Printf("Internal Server Error: %s\n", msg)
+	ctx.WithError(msg).WithField("error", msg).Error("Internal Server Error.")
 }
 
 func BR(w http.ResponseWriter, r *http.Request, msg error, code int) {
+	ctx := logger.WithField("method", "BR")
 	ServeJSON(w, r, &Response{"error": msg.Error()}, code)
+	ctx.WithError(msg).WithField("error", msg.Error()).WithField("code", code).Error("Bad Request.")
 }
 
 func NotAllowed(w http.ResponseWriter, r *http.Request) {
