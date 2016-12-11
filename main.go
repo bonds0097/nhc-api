@@ -33,6 +33,8 @@ var (
 	GLOBALS     *Globals
 	verifyKey   []byte
 	signKey     []byte
+	sslCert     string
+	sslKey      string
 )
 
 func init() {
@@ -63,7 +65,13 @@ func init() {
 	pub := os.Getenv("JWT_PUB_KEY")
 	priv := os.Getenv("JWT_PRIV_KEY")
 	if pub == "" || priv == "" {
-		ctx.Println("Key pair for JWT signing not supplied.")
+		ctx.Fatal("Key pair for JWT signing not supplied.")
+	}
+
+	sslCert := os.Getenv("SSL_CERT")
+	sslKey := os.Getenv("SSL_KEY")
+	if sslCert == "" || sslKey == "" {
+		ctx.Fatal("Cert or Key for SSL not supplied.")
 	}
 
 	verifyKey = []byte(strings.Trim(pub, `"`))

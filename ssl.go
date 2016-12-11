@@ -5,24 +5,23 @@ import (
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"path"
 )
 
 const (
-	sslCert string = "ssl_cert.pem"
-	sslKey  string = "ssl_key.pem"
+	sslCertFilename string = "ssl_cert.pem"
+	sslKeyFilename  string = "ssl_key.pem"
 )
 
-func loadSSLFiles() (cert, key string, err error) {
+func loadSSLFiles() (sslCertPath, sslKeyPath string, err error) {
 	ctx := logger.WithField("method", "loadSSLFiles")
-	cert = path.Join(APP_DIR, sslCert)
-	key = path.Join(APP_DIR, sslKey)
+	sslCertPath = path.Join(APP_DIR, sslCertFilename)
+	sslKeyPath = path.Join(APP_DIR, sslKeyFilename)
 
-	// Load from env vars and write to file system.
-	certData := os.Getenv("SSL_CERT")
+	// Verify cert and key.
+	sslCertData := []byte(sslCert)
 
-	block, _ := pem.Decode([]byte(certData))
+	block, _ := pem.Decode(sslCertData)
 	if block == nil {
 		return "", "", fmt.Errorf("failed to parse certificate PEM")
 	}
@@ -35,15 +34,15 @@ func loadSSLFiles() (cert, key string, err error) {
 		ctx.WithError(err).Warn("Loaded SSL Certificate but it failed to verify.")
 	}
 
-	errF := ioutil.WriteFile(cert, []byte(certData), 0644)
+	errF := ioutil.WriteFile(sslCertPath, sslCertData, 0644)
 	if errF != nil {
 		return "", "", fmt.Errorf("failed to writ cert to file: %s", errF)
 	}
-	ctx.WithField("file", cert).Info("Wrote cert to file.")
+	ctx.WithField("file", sslCertPath).Info("Wrote cert to file.")
 
-	keyData := os.Getenv("SSL_KEY")
+	sslKeyData := []byte(sslKey)
 
-	block, _ = pem.Decode([]byte(keyData))
+	block, _ = pem.Decode(sslKeyData)
 	if block == nil {
 		return "", "", fmt.Errorf("failed to parse key PEM")
 	}
@@ -52,11 +51,11 @@ func loadSSLFiles() (cert, key string, err error) {
 		return "", "", fmt.Errorf("failed to parse key: %s", errC)
 	}
 
-	errF = ioutil.WriteFile(key, []byte(keyData), 0644)
+	errF = ioutil.WriteFile(sslKeyPath, sslKeyData, 0644)
 	if errF != nil {
 		return "", "", fmt.Errorf("failed to writ key to file: %s", errF)
 	}
-	ctx.WithField("file", key).Info("Wrote key to file.")
+	ctx.WithField("file", sslKeyPath).Info("Wrote key to file.")
 
-	return cert, key, nil
+	return sslCertPath, sslKeyPath, nil
 }
