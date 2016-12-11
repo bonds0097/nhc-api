@@ -6,6 +6,7 @@ import (
 	"os"
 	"runtime"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/Sirupsen/logrus"
@@ -38,9 +39,10 @@ func init() {
 	logger = logrus.New()
 	hook, err := logrus_logstash.NewHook("udp", os.Getenv("LOGSTASH_ADDR"), "nhc-api")
 	if err != nil {
-		logger.WithError(err).Fatal("Failed to set up logstash hook.")
+		logger.WithError(err).Warn("Failed to set up logstash hook.")
+	} else {
+		logger.Hooks.Add(hook)
 	}
-	logger.Hooks.Add(hook)
 	ctx := logger.WithFields(logrus.Fields{
 		"method": "init",
 	})
@@ -64,8 +66,8 @@ func init() {
 		ctx.Println("Key pair for JWT signing not supplied.")
 	}
 
-	verifyKey = []byte(pub)
-	signKey = []byte(priv)
+	verifyKey = []byte(strings.Trim(pub, `"`))
+	signKey = []byte(strings.Trim(priv, `"`))
 
 	flag.StringVar(&PORT, "port", "8443", "Port to run on.")
 	flag.StringVar(&ENV, "env", "prod", "Environment to deploy to. Options: prod, test, or dev")
