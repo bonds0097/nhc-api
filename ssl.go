@@ -11,6 +11,7 @@ const (
 )
 
 func loadSSLFiles() (cert, key string, err error) {
+	ctx := logger.WithField("method", "loadSSLFiles")
 	cert = path.Join(APP_DIR, sslCert)
 	key = path.Join(APP_DIR, sslKey)
 
@@ -23,6 +24,7 @@ func loadSSLFiles() (cert, key string, err error) {
 		if errF != nil {
 			return "", "", fmt.Errorf("failed to writ cert to file: %s", errF)
 		}
+		ctx.WithField("file", cert).Info("Wrote cert to file.")
 	}
 
 	_, errF = os.Open(cert)
@@ -32,6 +34,7 @@ func loadSSLFiles() (cert, key string, err error) {
 		if errF != nil {
 			return "", "", fmt.Errorf("failed to writ key to file: %s", errF)
 		}
+		ctx.WithField("file", key).Info("Wrote key to file.")
 	}
 
 	return cert, key, nil

@@ -33,8 +33,6 @@ var (
 	GLOBALS     *Globals
 	verifyKey   []byte
 	signKey     []byte
-	sslCertFile string
-	sslKeyFile  string
 )
 
 func init() {
@@ -70,11 +68,6 @@ func init() {
 
 	verifyKey = []byte(strings.Trim(pub, `"`))
 	signKey = []byte(strings.Trim(priv, `"`))
-
-	sslCertFile, sslKeyFile, err = loadSSLFiles()
-	if err != nil {
-		ctx.WithError(err).Fatalf("Failed to load SSL files.")
-	}
 
 	flag.StringVar(&PORT, "port", "8443", "Port to run on.")
 	flag.StringVar(&ENV, "env", "prod", "Environment to deploy to. Options: prod, test, or dev")
@@ -208,6 +201,12 @@ func main() {
 	}
 
 	if ENV == "prod" || ENV == "test" {
+		// Load SSL Files
+		sslCertFile, sslKeyFile, err := loadSSLFiles()
+		if err != nil {
+			ctx.WithError(err).Fatalf("Failed to load SSL files.")
+		}
+
 		ctx.WithField("port", PORT).Info("Starting NHC-API server with HTTPS enabled.")
 		ctx.Fatal(s.ListenAndServeTLS(sslCertFile, sslKeyFile))
 	} else {
