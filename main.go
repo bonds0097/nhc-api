@@ -6,10 +6,7 @@ import (
 	"os"
 	"runtime"
 	"strconv"
-	"strings"
 	"time"
-
-	"encoding/pem"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/bshuster-repo/logrus-logstash-hook"
@@ -39,7 +36,7 @@ var (
 	sslKeyData  []byte
 )
 
-func init() {
+func main() {
 	logger = logrus.New()
 	hook, err := logrus_logstash.NewHook("udp", os.Getenv("LOGSTASH_ADDR"), "nhc-api")
 	if err != nil {
@@ -48,7 +45,7 @@ func init() {
 		logger.Hooks.Add(hook)
 	}
 	ctx := logger.WithFields(logrus.Fields{
-		"method": "init",
+		"method": "main",
 	})
 
 	ctx.Println("Parsing flags...")
@@ -64,39 +61,24 @@ func init() {
 		MAIL_PORT = port
 	}
 
-	pub := os.Getenv("JWT_PUB_KEY")
-	priv := os.Getenv("JWT_PRIV_KEY")
-	if pub == "" || priv == "" {
-		ctx.Fatal("Key pair for JWT signing not supplied.")
+	verifyKey, err = loadPEMBlockFromEnv("JWT_PUB_KEY")
+	if err != nil {
+		ctx.WithError(err).Fatal("Failed to load JWT Verification key.")
 	}
 
-	replacer := strings.NewReplacer(" ", "\n")
-
-	pub = replacer.Replace(pub)
-	priv = replacer.Replace(priv)
-
-	verifyKey = []byte(pub)
-	signKey = []byte(priv)
-
-	sslCert := os.Getenv("SSL_CERT")
-	sslKey := os.Getenv("SSL_KEY")
-	if sslCert == "" || sslKey == "" {
-		ctx.Fatal("Cert or Key for SSL not supplied.")
+	signKey, err = loadPEMBlockFromEnv("JWT_PRIV_KEY")
+	if err != nil {
+		ctx.WithError(err).Fatal("Failed to load JWT Signing key.")
 	}
 
-	sslCert = replacer.Replace(sslCert)
-	sslKey = replacer.Replace(sslKey)
+	sslCertData, err = loadPEMBlockFromEnv("SSL_CERT")
+	if err != nil {
+		ctx.WithError(err).Fatal("Failed to load SSL Certificate.")
+	}
 
-	sslCertData = []byte(sslCert)
-	sslKeyData = []byte(sslKeyData)
-
-	pems := [][]byte{verifyKey, signKey, sslCertData, sslKeyData}
-	for i, data := range pems {
-		block, rest := pem.Decode(data)
-		if block == nil {
-			ctx.WithField("rest", string(rest)).WithField("index", i).
-				Fatal("Failed to parse data as PEM block.")
-		}
+	sslKeyData, err = loadPEMBlockFromEnv("SSL_KEY")
+	if err != nil {
+		ctx.WithError(err).Fatal("Failed to load SSL Key.")
 	}
 
 	flag.StringVar(&PORT, "port", "8443", "Port to run on.")
@@ -104,12 +86,6 @@ func init() {
 	flag.BoolVar(&INIT, "init", false, "Initialize the database on startup?")
 	flag.StringVar(&APP_DIR, "dir", "/etc/nhc-api/", "Application directory")
 	flag.Parse()
-}
-
-func main() {
-	ctx := logger.WithFields(logrus.Fields{
-		"method": "main",
-	})
 
 	if ENV == "prod" {
 		URL = "api.nutritionhabitchallenge.com"
@@ -129,7 +105,7 @@ func main() {
 		}
 	}
 
-	err := DBEnsureIndices(dbSession)
+	err = DBEnsureIndices(dbSession)
 	if err != nil {
 		ctx.WithError(err).Fatalf("Error ensuring DB indices.")
 	}
