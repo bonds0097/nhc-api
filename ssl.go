@@ -1,8 +1,6 @@
 package main
 
 import (
-	"crypto/x509"
-	"encoding/pem"
 	"fmt"
 	"io/ioutil"
 	"path"
@@ -20,27 +18,16 @@ func loadSSLFiles() (sslCertPath, sslKeyPath string, err error) {
 
 	// Write cert and key to file.
 	sslCertData := []byte(sslCert)
-
 	errF := ioutil.WriteFile(sslCertPath, sslCertData, 0644)
 	if errF != nil {
-		return "", "", fmt.Errorf("failed to writ cert to file: %s", errF)
+		return "", "", fmt.Errorf("failed to write cert to file: %s", errF)
 	}
 	ctx.WithField("file", sslCertPath).Info("Wrote cert to file.")
 
 	sslKeyData := []byte(sslKey)
-
-	block, rest := pem.Decode(sslKeyData)
-	if block == nil {
-		return "", "", fmt.Errorf("failed to parse key PEM:\n%s", string(rest))
-	}
-	_, errC := x509.ParsePKCS1PrivateKey(block.Bytes)
-	if errC != nil {
-		return "", "", fmt.Errorf("failed to parse key: %s", errC)
-	}
-
 	errF = ioutil.WriteFile(sslKeyPath, sslKeyData, 0644)
 	if errF != nil {
-		return "", "", fmt.Errorf("failed to writ key to file: %s", errF)
+		return "", "", fmt.Errorf("failed to write key to file: %s", errF)
 	}
 	ctx.WithField("file", sslKeyPath).Info("Wrote key to file.")
 
