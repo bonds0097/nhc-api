@@ -29,9 +29,9 @@ func loadSSLFiles() (sslCertPath, sslKeyPath string, err error) {
 
 	sslKeyData := []byte(sslKey)
 
-	block, _ := pem.Decode(sslKeyData)
+	block, rest := pem.Decode(sslKeyData)
 	if block == nil {
-		return "", "", fmt.Errorf("failed to parse key PEM:\n%s", sslKey)
+		return "", "", fmt.Errorf("failed to parse key PEM:\n%s", string(rest))
 	}
 	_, errC := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if errC != nil {
