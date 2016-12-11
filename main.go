@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"encoding/pem"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/bshuster-repo/logrus-logstash-hook"
 	"github.com/codegangsta/negroni"
@@ -33,8 +35,8 @@ var (
 	GLOBALS     *Globals
 	verifyKey   []byte
 	signKey     []byte
-	sslCert     string
-	sslKey      string
+	sslCertData []byte
+	sslKeyData  []byte
 )
 
 func init() {
@@ -68,14 +70,34 @@ func init() {
 		ctx.Fatal("Key pair for JWT signing not supplied.")
 	}
 
-	sslCert = os.Getenv("SSL_CERT")
-	sslKey = os.Getenv("SSL_KEY")
+	replacer := strings.NewReplacer(" ", "\n")
+
+	pub = replacer.Replace(pub)
+	priv = replacer.Replace(priv)
+
+	verifyKey = []byte(pub)
+	signKey = []byte(priv)
+
+	sslCert := os.Getenv("SSL_CERT")
+	sslKey := os.Getenv("SSL_KEY")
 	if sslCert == "" || sslKey == "" {
 		ctx.Fatal("Cert or Key for SSL not supplied.")
 	}
 
-	verifyKey = []byte(strings.Trim(pub, `"`))
-	signKey = []byte(strings.Trim(priv, `"`))
+	sslCert = replacer.Replace(sslCert)
+	sslKey = replacer.Replace(sslKey)
+
+	sslCertData = []byte(sslCert)
+	sslKeyData = []byte(sslKeyData)
+
+	pems := [][]byte{verifyKey, signKey, sslCertData, sslKeyData}
+	for i, data := range pems {
+		block, rest := pem.Decode(data)
+		if block == nil {
+			ctx.WithField("rest", rest).WithField("index", i).
+				Fatal("Failed to parse data as PEM block.")
+		}
+	}
 
 	flag.StringVar(&PORT, "port", "8443", "Port to run on.")
 	flag.StringVar(&ENV, "env", "prod", "Environment to deploy to. Options: prod, test, or dev")

@@ -17,14 +17,12 @@ func loadSSLFiles() (sslCertPath, sslKeyPath string, err error) {
 	sslKeyPath = path.Join(APP_DIR, sslKeyFilename)
 
 	// Write cert and key to file.
-	sslCertData := []byte(sslCert)
 	errF := ioutil.WriteFile(sslCertPath, sslCertData, 0644)
 	if errF != nil {
 		return "", "", fmt.Errorf("failed to write cert to file: %s", errF)
 	}
 	ctx.WithField("file", sslCertPath).Info("Wrote cert to file.")
 
-	sslKeyData := []byte(sslKey)
 	errF = ioutil.WriteFile(sslKeyPath, sslKeyData, 0644)
 	if errF != nil {
 		return "", "", fmt.Errorf("failed to write key to file: %s", errF)
