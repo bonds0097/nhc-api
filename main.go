@@ -94,7 +94,7 @@ func init() {
 	for i, data := range pems {
 		block, rest := pem.Decode(data)
 		if block == nil {
-			ctx.WithField("rest", rest).WithField("index", i).
+			ctx.WithField("rest", string(rest)).WithField("index", i).
 				Fatal("Failed to parse data as PEM block.")
 		}
 	}
