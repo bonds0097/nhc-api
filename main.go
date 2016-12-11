@@ -68,8 +68,8 @@ func init() {
 		ctx.Fatal("Key pair for JWT signing not supplied.")
 	}
 
-	sslCert := os.Getenv("SSL_CERT")
-	sslKey := os.Getenv("SSL_KEY")
+	sslCert = os.Getenv("SSL_CERT")
+	sslKey = os.Getenv("SSL_KEY")
 	if sslCert == "" || sslKey == "" {
 		ctx.Fatal("Cert or Key for SSL not supplied.")
 	}
