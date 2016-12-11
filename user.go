@@ -20,8 +20,10 @@ type User struct {
 	LastName     string        `bson:"lastName,omitempty" json:"lastName,omitempty"`
 	Family       string        `bson:"family,omitempty" json:"family,omitempty"`
 	Organization string        `bson:"organization,omitempty" json:"organization,omitempty"`
+	Team         string        `bson:"team,omitempty" json:"team,omitempty"`
 	Sharing      string        `bson:"sharing,omitempty" json:"sharing,omitempty"`
 	Comment      string        `bson:"comment,omitempty" json:"comment,omitempty"`
+	Referral     string        `bson:"referral,omitempty" json:"referral,omitempty"`
 	Donation     string        `bson:"donation,omitempty" json:"donation,omitempty"`
 	Picture      string        `bson:"picture,omitempty" json:"picture,omitempty"`
 	Facebook     string        `bson:"facebook,omitempty" json:"facebook,omitempty"`
@@ -42,7 +44,9 @@ type LimitedUser struct {
 	LastName     string        `bson:"lastName,omitempty" json:"lastName,omitempty"`
 	Family       string        `bson:"family,omitempty" json:"family,omitempty"`
 	Organization string        `bson:"organization,omitempty" json:"organization,omitempty"`
+	Team         string        `bson:"team,omitempty" json:"team,omitempty"`
 	Comment      string        `bson:"comment,omitempty" json:"comment,omitempty"`
+	Referral     string        `bson:"referral,omitempty" json:"referral,omitempty"`
 	Role         string        `bson:"role,omitempty" json:"role,omitempty"`
 	Status       string        `bson:"status,omitempty" json:"status,omitempty"`
 	LastLogin    time.Time     `bson:"lastLogin,omitempty" json:"lastLogin,omitempty"`
@@ -54,6 +58,7 @@ type UserEditData struct {
 	LastName     string `bson:"lastName,omitempty" json:"lastName,omitempty"`
 	Family       string `bson:"family,omitempty" json:"family,omitempty"`
 	Organization string `bson:"organization,omitempty" json:"organization,omitempty"`
+	Team         string `bson:"team,omitempty" json:"team,omitempty"`
 	Role         string `bson:"role,omitempty" json:"role,omitempty"`
 	Status       string `bson:"status,omitempty" json:"status,omitempty"`
 }

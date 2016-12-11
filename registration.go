@@ -33,7 +33,9 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 
 		type RegistrationData struct {
 			Organization string        `json:"organization"`
+			Team         string        `json:"team"`
 			Comment      string        `json:"comment"`
+			Referral     string        `json:"referral"`
 			Donation     string        `json:"donation"`
 			Sharing      string        `json:"sharing"`
 			Participants []Participant `json:"participants"`
@@ -53,7 +55,9 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 		// Validate all data.
 		type RegistrationValidation struct {
 			Organization []string `json:"organization,omitempty"`
+			Team         []string `json:"team,omitempty"`
 			Comment      []string `json:"comment,omitempty"`
+			Referral     []string `json:"referral,omitempty"`
 			Donation     []string `json:"donation,omitempty"`
 			Sharing      []string `json:"sharing,omitempty"`
 			Participants []struct {
@@ -76,9 +80,21 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 			formIsValid = false
 		}
 
+		// Check team for profanity.
+		if HasProfanity(registrationData.Team) {
+			registrationValidation.Team = append(registrationValidation.Team, PROFANITY_ERROR)
+			formIsValid = false
+		}
+
 		// Check comment for profanity.
 		if HasProfanity(registrationData.Comment) {
 			registrationValidation.Comment = append(registrationValidation.Comment, PROFANITY_ERROR)
+			formIsValid = false
+		}
+
+		// Check referral for profanity.
+		if HasProfanity(registrationData.Referral) {
+			registrationValidation.Referral = append(registrationValidation.Referral, PROFANITY_ERROR)
 			formIsValid = false
 		}
 
@@ -106,6 +122,12 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 			formIsValid = false
 		}
 
+		// Ensure Organization exists.
+		if registrationData.Organization != "" && !OrganizationExists(db, strings.ToUpper(registrationData.Organization)) {
+			registrationValidation.Organization = append(registrationValidation.Organization, ORGANIZATION_ERROR)
+			formIsValid = false
+		}
+
 		// At this point, if we have any validation issues, return the validation struct.
 		if !formIsValid {
 			b, err := json.Marshal(registrationValidation)
@@ -119,16 +141,11 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Try and create new org. We don't worry about dup errors.
-		errM = CreateOrg(db, registrationData.Organization, true)
-		if errM != nil {
-			HandleModelError(w, r, errM)
-			return
-		}
-
 		// Save all data.
 		user.Organization = registrationData.Organization
+		user.Team = registrationData.Team
 		user.Comment = registrationData.Comment
+		user.Referral = registrationData.Referral
 		user.Donation = registrationData.Donation
 		user.Sharing = registrationData.Sharing
 		user.Participants = registrationData.Participants
