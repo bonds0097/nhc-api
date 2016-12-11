@@ -18,21 +18,8 @@ func loadSSLFiles() (sslCertPath, sslKeyPath string, err error) {
 	sslCertPath = path.Join(APP_DIR, sslCertFilename)
 	sslKeyPath = path.Join(APP_DIR, sslKeyFilename)
 
-	// Verify cert and key.
+	// Write cert and key to file.
 	sslCertData := []byte(sslCert)
-
-	block, _ := pem.Decode(sslCertData)
-	if block == nil {
-		return "", "", fmt.Errorf("failed to parse certificate PEM:\n%s", sslCert)
-	}
-	certPEM, errC := x509.ParseCertificate(block.Bytes)
-	if errC != nil {
-		return "", "", fmt.Errorf("failed to parse certificate: %s", errC)
-	}
-
-	if _, err := certPEM.Verify(x509.VerifyOptions{DNSName: "api.nutritionhabitchallenge.com"}); err != nil {
-		ctx.WithError(err).Warn("Loaded SSL Certificate but it failed to verify.")
-	}
 
 	errF := ioutil.WriteFile(sslCertPath, sslCertData, 0644)
 	if errF != nil {
@@ -42,11 +29,11 @@ func loadSSLFiles() (sslCertPath, sslKeyPath string, err error) {
 
 	sslKeyData := []byte(sslKey)
 
-	block, _ = pem.Decode(sslKeyData)
+	block, _ := pem.Decode(sslKeyData)
 	if block == nil {
 		return "", "", fmt.Errorf("failed to parse key PEM:\n%s", sslKey)
 	}
-	_, errC = x509.ParsePKCS1PrivateKey(block.Bytes)
+	_, errC := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if errC != nil {
 		return "", "", fmt.Errorf("failed to parse key: %s", errC)
 	}
