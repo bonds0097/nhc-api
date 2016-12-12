@@ -200,3 +200,28 @@ func DBEnsureIntegrity(s *mgo.Session) error {
 	ctx.Println("*** Database integrity checks complete. ***")
 	return nil
 }
+
+// ResetUsers sets all registered users to unregistered.
+func ResetUsers(s *mgo.Session) error {
+	ctx := logger.WithField("method", "ResetUsers")
+	db := s.DB(DBNAME)
+
+	c := db.C("users")
+	// Set all pending users to registered.
+	change := mgo.Change{
+		Update:    bson.M{"$set": bson.M{"status": UNREGISTERED.String()}},
+		ReturnNew: true,
+	}
+	changeInfo, err := c.Find(bson.M{"status": REGISTERED.String()}).Apply(change, nil)
+	if err != nil && err != mgo.ErrNotFound {
+		return fmt.Errorf("Error setting registered users to unregistered: %s\n", err)
+	}
+
+	if changeInfo != nil {
+		ctx.WithField("updated", changeInfo.Updated).Info("Updated users from registered to unregistered.")
+	} else {
+		ctx.Info("No users updated from registered to unregistered.")
+	}
+
+	return nil
+}

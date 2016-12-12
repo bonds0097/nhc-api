@@ -34,6 +34,7 @@ var (
 	signKey     []byte
 	sslCertData []byte
 	sslKeyData  []byte
+	resetUsers  bool
 )
 
 func main() {
@@ -85,6 +86,7 @@ func main() {
 	flag.StringVar(&ENV, "env", "prod", "Environment to deploy to. Options: prod, test, or dev")
 	flag.BoolVar(&INIT, "init", false, "Initialize the database on startup?")
 	flag.StringVar(&APP_DIR, "dir", "/etc/nhc-api/", "Application directory")
+	flag.BoolVar(&resetUsers, "reset-users", false, "Reset users to unregistered?")
 	flag.Parse()
 
 	if ENV == "prod" {
@@ -119,6 +121,13 @@ func main() {
 	err = DBEnsureIntegrity(dbSession)
 	if err != nil {
 		ctx.WithError(err).Fatalf("Error ensuring DB integrity.")
+	}
+
+	if resetUsers {
+		err = ResetUsers(dbSession)
+		if err != nil {
+			ctx.WithError(err).Fatal("Error reseting users to unregistered.")
+		}
 	}
 
 	corsMiddleware := cors.New(cors.Options{
