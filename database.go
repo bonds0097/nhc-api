@@ -207,21 +207,20 @@ func ResetUsers(s *mgo.Session) error {
 	db := s.DB(DBNAME)
 
 	c := db.C("users")
-	// Set all pending users to registered.
-	change := mgo.Change{
-		Update:    bson.M{"$set": bson.M{"status": UNREGISTERED.String()}},
-		ReturnNew: true,
+	var registeredUsers []User
+	err := c.Find(bson.M{"status": "registered"}).All(&registeredUsers)
+	if err != nil {
+		return fmt.Errorf("Error retrieving registered users: %s\n", err)
 	}
-	changeInfo, err := c.Find(bson.M{"status": REGISTERED.String()}).Apply(change, nil)
-	if err != nil && err != mgo.ErrNotFound {
-		return fmt.Errorf("Error setting registered users to unregistered: %s\n", err)
+	for _, user := range registeredUsers {
+		user.Status = UNREGISTERED.String()
+		errM := user.Save(db)
+		if errM != nil {
+			return errM.Reason
+		}
 	}
 
-	if changeInfo != nil {
-		ctx.WithField("updated", changeInfo.Updated).Info("Updated users from registered to unregistered.")
-	} else {
-		ctx.Info("No users updated from registered to unregistered.")
-	}
+	ctx.WithField("count", len(registeredUsers)).Info("Set all registered users to unregistered.")
 
 	return nil
 }
