@@ -251,6 +251,8 @@ func LoginWithGoogle(w http.ResponseWriter, r *http.Request) {
 	err = json.Unmarshal([]byte(body), &profileData)
 	ctx.WithField("code", resProfile.StatusCode).Info("Status Code.")
 	if resProfile.StatusCode != 200 {
+		ctx.WithField("response", resProfile).
+			Error("Received a non-200 response when requesting profile data from google.")
 		ServeJSON(w, r, &Response{
 			"message": profileData["error"].(map[string]interface{})["message"],
 		}, 500)
