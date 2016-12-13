@@ -123,7 +123,7 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Ensure Organization exists.
-		if registrationData.Organization != "" && !OrganizationExists(db, strings.ToUpper(registrationData.Organization)) {
+		if registrationData.Organization != "" && !OrganizationExists(db, registrationData.Organization) {
 			registrationValidation.Organization = append(registrationValidation.Organization, ORGANIZATION_ERROR)
 			formIsValid = false
 		}
