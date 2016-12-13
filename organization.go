@@ -18,11 +18,13 @@ type Organization struct {
 }
 
 func OrganizationExists(db *mgo.Database, org string) bool {
+	ctx := logger.WithField("method", "OrganizationExists")
 	c := db.C("organizations")
 	count, _ := c.Find(bson.M{"name": org}).Limit(1).Count()
 	if count > 0 {
 		return true
 	} else {
+		ctx.WithField("org", org).Warn("Organization not found.")
 		return false
 	}
 }
