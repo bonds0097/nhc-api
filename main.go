@@ -132,7 +132,7 @@ func main() {
 
 	corsMiddleware := cors.New(cors.Options{
 		AllowedOrigins: []string{
-			"http://localhost:900",
+			"http://localhost:9000",
 			"https://nutritionhabitchallenge.com",
 			"https://www.nutritionhabitchallenge.com",
 			"https://test.nutritionhabitchallenge.com"},
