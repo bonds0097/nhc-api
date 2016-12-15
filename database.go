@@ -106,7 +106,10 @@ func DBInit(s *mgo.Session) error {
 	}
 
 	uC := db.C("organizations")
-	uC.DropCollection()
+	err = uC.DropCollection()
+	if err != nil {
+		return fmt.Errorf("failed to drop organizations: %s", err)
+	}
 	for _, org := range orgs {
 		err = uC.Insert(bson.M{"name": org, "needsApproval": false})
 		if err != nil {
