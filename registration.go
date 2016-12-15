@@ -108,13 +108,15 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Ensure that sharing is a valid selection.
-		if registrationData.Sharing == "" {
-			registrationValidation.Sharing = append(registrationValidation.Sharing, REQUIRED_ERROR)
-			formIsValid = false
-		} else if !Contains(SHARING, registrationData.Sharing) {
-			registrationValidation.Sharing = append(registrationValidation.Sharing, BAD_CHOICE_ERROR)
-			formIsValid = false
-		}
+		// NOTE: As of 12/15 we've disabled this. Will delete code in a few
+		// days.
+		// if registrationData.Sharing == "" {
+		// 	registrationValidation.Sharing = append(registrationValidation.Sharing, REQUIRED_ERROR)
+		// 	formIsValid = false
+		// } else if !Contains(SHARING, registrationData.Sharing) {
+		// 	registrationValidation.Sharing = append(registrationValidation.Sharing, BAD_CHOICE_ERROR)
+		// 	formIsValid = false
+		// }
 
 		// Ensure family code exists.
 		if registrationData.FamilyCode != "" && !FamilyExists(db, strings.ToUpper(registrationData.FamilyCode)) {
