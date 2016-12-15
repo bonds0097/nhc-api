@@ -18,6 +18,6 @@ WORKDIR /go/src/github.com/bonds0097/nhc-api
 RUN glide install
 
 RUN go install github.com/bonds0097/nhc-api
-ENTRYPOINT /go/bin/nhc-api
+ENTRYPOINT /go/bin/nhc-api -env=dev -port=4433
 
 EXPOSE 8443

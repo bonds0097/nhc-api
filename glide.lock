@@ -1,5 +1,5 @@
 hash: 54da2a15f8c6c4e21d05a6eb6f70dc82eac63ebbb2ffabebe3ef52b7ab6dc903
-updated: 2016-12-11T15:44:04.864157748-05:00
+updated: 2016-12-15T15:31:42.206277906-05:00
 imports:
 - name: github.com/bshuster-repo/logrus-logstash-hook
   version: 544f72d23cd2536636193deff26b6190c47e10bb
@@ -26,17 +26,17 @@ imports:
 - name: github.com/Sirupsen/logrus
   version: d26492970760ca5d33129d2d799e34be5c4782eb
 - name: golang.org/x/crypto
-  version: b07d8c96772f426812d3fc5530710ec1f3b205e7
+  version: 01be46f62051d02cb6a36c9b47b37b24e5758c81
   subpackages:
   - bcrypt
   - blowfish
 - name: golang.org/x/net
-  version: f09c4662a0bd6bd8943ac7b4931e185df9471da4
+  version: 6c4ac8bdbf06a105c4baf3dcda28bd9b0fb15588
   subpackages:
   - context
   - publicsuffix
 - name: golang.org/x/sys
-  version: a646d33e2ee3172a661fc09bca23bb4889a41bc8
+  version: c200b10b5d5e122be351b67af224adc6128af5bf
   subpackages:
   - unix
 - name: gopkg.in/alexcesaro/quotedprintable.v3
