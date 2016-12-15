@@ -4,7 +4,6 @@ import (
 	"flag"
 	"net/http"
 	"os"
-	"runtime"
 	"strconv"
 	"time"
 
@@ -72,16 +71,6 @@ func main() {
 		ctx.WithError(err).Fatal("Failed to load JWT Signing key.")
 	}
 
-	sslCertData, err = loadPEMBlockFromEnv("SSL_CERT")
-	if err != nil {
-		ctx.WithError(err).Fatal("Failed to load SSL Certificate.")
-	}
-
-	sslKeyData, err = loadPEMBlockFromEnv("SSL_KEY")
-	if err != nil {
-		ctx.WithError(err).Fatal("Failed to load SSL Key.")
-	}
-
 	flag.StringVar(&PORT, "port", "8443", "Port to run on.")
 	flag.StringVar(&ENV, "env", "prod", "Environment to deploy to. Options: prod, test, or dev")
 	flag.BoolVar(&INIT, "init", false, "Initialize the database on startup?")
@@ -97,7 +86,6 @@ func main() {
 		URL = "localhost"
 	}
 
-	runtime.GOMAXPROCS(runtime.NumCPU())
 	dbSession := DBConnect(MONGODB_URL)
 
 	if INIT {
@@ -217,6 +205,16 @@ func main() {
 
 	if ENV == "prod" || ENV == "test" {
 		// Load SSL Files
+		sslCertData, err = loadPEMBlockFromEnv("SSL_CERT")
+		if err != nil {
+			ctx.WithError(err).Fatal("Failed to load SSL Certificate.")
+		}
+
+		sslKeyData, err = loadPEMBlockFromEnv("SSL_KEY")
+		if err != nil {
+			ctx.WithError(err).Fatal("Failed to load SSL Key.")
+		}
+
 		sslCertFile, sslKeyFile, err := loadSSLFiles()
 		if err != nil {
 			ctx.WithError(err).Fatalf("Failed to load SSL files.")

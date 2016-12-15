@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -37,7 +38,9 @@ func loadSSLFiles() (sslCertPath, sslKeyPath string, err error) {
 
 func loadPEMBlockFromEnv(envvar string) ([]byte, error) {
 	s := os.Getenv(envvar)
-
+	if s == "" {
+		return []byte{}, errors.New("Blank env var.")
+	}
 	sA := strings.SplitAfter(s, "----- ")
 	sA2 := strings.Split(sA[1], " -")
 
