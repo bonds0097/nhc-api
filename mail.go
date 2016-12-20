@@ -35,6 +35,7 @@ const registrationEmail = `
 <p>Congratulations! You are now registered for the Nutrition Habit Challenge 2016. Your participation benefits both you and our community.</p>
 {{with .Family}}<p>Here is your family code to share with members of your family, they'll need it when they register: <strong>{{.}}</strong></p>{{end}}
 <p>We’ll be sending you an email as we get closer to the event. In the meantime, check out the <a href="https://www.nutritionhabitchallenge.com/resources">Resource Page</a> for great information and insights to help you be successful with the Challenge.</p>
+<p>Stay connected with us and be "in-the-know" about special NHC promotional events by following us on <a href="https://facebook.com/NHC2017">Facebook</a>.</p>
 {{if eq .Donation "ysb"}}<p>To donate to the Youth Service Bureau, follow <strong><a href="http://ccysb.com/?page_id=1197" target="_blank">this link</a></strong>.</p>
 {{else if eq .Donation "cvim"}}<p>To donate to the Centre Volunteers in Medicine, follow <a href="https://cvim.ejoinme.org/MyPages/CVIMNHC/tabid/524126/Default.aspx" target="_blank">this link</a>.</p>{{end}}
 <p><small>If you would like a physical scorecard to track your challenge progress with, download and print the <a href="https://www.nutritionhabitchallenge.com/downloads/scorecard.pdf">PDF scorecard.</a></small></p>
