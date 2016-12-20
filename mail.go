@@ -10,6 +10,8 @@ import (
 	"gopkg.in/gomail.v2"
 )
 
+const maxRetries = 5
+
 type VerificationTemplate struct {
 	FirstName string
 	Code      string
@@ -86,6 +88,9 @@ func SendBulkMail(recipients []string, subject string, body string) (errM *Error
 
 func SendMail(recipient string, subject string, body string) (errM *Error) {
 	ctx := logger.WithField("method", "SendMail")
+
+	var retryCount int
+
 	m := gomail.NewMessage()
 	m.SetHeader("From", "do-not-reply@nutritionhabitchallenge.com")
 	m.SetHeader("To", recipient)
@@ -93,11 +98,16 @@ func SendMail(recipient string, subject string, body string) (errM *Error) {
 	m.SetBody("text/html", body)
 
 	d := gomail.Dialer{Host: "smtp-relay.gmail.com", Port: 587}
+send:
 	d.TLSConfig = &tls.Config{InsecureSkipVerify: true}
 	if err := d.DialAndSend(m); err != nil {
-		ctx.WithError(err).WithField("recipient", recipient).Error("Error sending mail.")
-		errM = &Error{Internal: true, Reason: errors.New(fmt.Sprintf("Error sending mail: %s\n", err))}
-		return
+		retryCount++
+		if retryCount >= maxRetries {
+			ctx.WithError(err).WithField("recipient", recipient).Error("Error sending mail.")
+			errM = &Error{Internal: true, Reason: fmt.Errorf("Error sending mail: %s\n", err)}
+			return
+		}
+		goto send
 	}
 
 	ctx.WithField("recipient", recipient).WithField("subject", subject).Info("Successfully sent mail.")
