@@ -111,6 +111,8 @@ func LoginWithFacebook(w http.ResponseWriter, r *http.Request) {
 	err = json.Unmarshal([]byte(body), &profileData)
 
 	if resProfile.StatusCode != 200 {
+		ctx.WithField("response", resProfile).
+			Error("Received a non-200 response when requesting profile data from facebook.")
 		ServeJSON(w, r, &Response{
 			"message": profileData["error"].(map[string]interface{})["message"],
 		}, 500)
