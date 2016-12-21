@@ -13,7 +13,7 @@ const (
 )
 
 func HasProfanity(input string) bool {
-	return QueryGoogleProfanityFilter(AddSpaces(input))
+	return false
 }
 
 func AddSpaces(input string) (output string) {
