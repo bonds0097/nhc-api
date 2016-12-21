@@ -271,6 +271,7 @@ func AuthUser(db *mgo.Database, email, password string) (*User, *Error) {
 	err := uC.Find(bson.M{"email": email}).One(user)
 	if err != nil {
 		if err == mgo.ErrNotFound {
+			ctx.WithError(err).WithField("email", email).Warn("User autentication failed because user does not exist.")
 			return nil, &Error{Reason: errors.New("User wasn't found on our servers"), Internal: false}
 		}
 		return nil, &Error{Reason: err, Internal: true}
@@ -280,7 +281,7 @@ func AuthUser(db *mgo.Database, email, password string) (*User, *Error) {
 	}
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
-		ctx.WithError(err).WithField("email", email).Error("User authentication failed.")
+		ctx.WithError(err).WithField("email", email).Warn("User authentication failed due to bad password.")
 		return nil, &Error{Reason: errors.New("Incorrect password"), Internal: false, Code: http.StatusUnauthorized}
 	}
 
