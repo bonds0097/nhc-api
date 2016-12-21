@@ -278,8 +278,10 @@ func FindEnabledQuestion(db *mgo.Database) (q *Question, errM *Error) {
 func FindAllQuestions(db *mgo.Database) (q []Question, errM *Error) {
 	c := db.C("questions")
 	err := c.Find(nil).All(&q)
-	if err != nil {
-		errM = &Error{Reason: errors.New(fmt.Sprintf("Error retrieving questions: %s\n", err))}
+	if err == mgo.ErrNotFound {
+		return []Question{}, nil
+	} else if err != nil {
+		errM = &Error{Reason: fmt.Errorf("Error retrieving questions: %s\n", err)}
 		return
 	}
 
