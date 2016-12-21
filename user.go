@@ -195,6 +195,7 @@ func (u *User) Save(db *mgo.Database) (errM *Error) {
 		return
 	}
 
+	ctx.WithField("user", u.Email).Info("Created new user.")
 	return
 }
 
@@ -288,10 +289,13 @@ func AuthUser(db *mgo.Database, email, password string) (*User, *Error) {
 }
 
 func FindUserByQuery(db *mgo.Database, query bson.M) (*User, *Error) {
+	ctx := logger.WithField("method", FindUserByQuery)
+
 	uC := db.C("users")
 	user := &User{}
 	err := uC.Find(query).One(user)
 	if err == mgo.ErrNotFound {
+		ctx.WithError(err).WithField("query", query).Warn("User not found.")
 		return nil, &Error{Reason: errors.New("No user found."), Internal: false, Code: http.StatusNotFound}
 	} else if user.ID == "" {
 		return nil, &Error{Reason: errors.New("No user found."), Internal: false, Code: http.StatusNotFound}
@@ -302,15 +306,19 @@ func FindUserByQuery(db *mgo.Database, query bson.M) (*User, *Error) {
 }
 
 func FindUserById(db *mgo.Database, id bson.ObjectId) (*User, *Error) {
+	ctx := logger.WithField("method", FindUserById)
+
 	uC := db.C("users")
 	user := &User{}
 	err := uC.FindId(id).One(user)
 	if err != nil {
 		if err == mgo.ErrNotFound {
+			ctx.WithError(err).WithField("user", id).Warn("User not found.")
 			return nil, &Error{Reason: errors.New("User not found."), Internal: false, Code: http.StatusUnauthorized}
-		} else {
-			return nil, &Error{Reason: errors.New(fmt.Sprintf("mGo error: %s\n", err)), Internal: true}
 		}
+
+		return nil, &Error{Reason: fmt.Errorf("mGo error: %s\n", err), Internal: true}
+
 	} else if user.ID == "" {
 		return nil, &Error{Reason: errors.New("No user found."), Internal: false, Code: http.StatusUnauthorized}
 	}

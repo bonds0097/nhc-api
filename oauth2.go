@@ -83,17 +83,17 @@ func LoginWithFacebook(w http.ResponseWriter, r *http.Request) {
 	if res.StatusCode != 200 {
 		var errorData map[string]interface{}
 		json.Unmarshal([]byte(body), &errorData)
-		ctx.Println(errorData)
+		ctx.WithField("err", errorData).Error("Failed to authenticate with Facebook.")
 		ServeJSON(w, r, &Response{
 			"message": errorData["error"].(map[string]interface{})["message"],
 		}, 500)
 		return
 	}
-	ctx.Println("Made it to Step 2.")
 	// Step 2. Retrieve profile information about the current user.
 	var atData accessTokenData
 	err := json.Unmarshal([]byte(body), &atData)
 	if err != nil {
+		ctx.WithError(err).Error("Failed to unmarshal facebook profile data.")
 		ISR(w, r, errors.New(fmt.Sprintf("Error reading profile data from Facebook: %s\n", err)))
 		return
 	}
@@ -121,7 +121,6 @@ func LoginWithFacebook(w http.ResponseWriter, r *http.Request) {
 
 	db := GetDB(w, r)
 	if IsTokenSet(r) {
-		ctx.Println("Made it to Step 3a.")
 		// Step 3a. Link user accounts.
 		existingUser, errM := FindUserByProvider(db, "facebook", profileData["id"].(string))
 		if existingUser != nil {
@@ -163,7 +162,6 @@ func LoginWithFacebook(w http.ResponseWriter, r *http.Request) {
 
 		SetToken(w, r, user)
 	} else {
-		ctx.Println("Made it to Step 3b.")
 		// Step 3b. Create a new user account or return an existing one.
 		existingUser, errM := FindUserByProvider(db, "facebook", profileData["id"].(string))
 		if existingUser != nil {
@@ -175,7 +173,6 @@ func LoginWithFacebook(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		ctx.Println("Made it to User Creation.")
 		// Make sure we have the user's e-mail or error out.
 		if profileData["email"] == nil {
 			BR(w, r, errors.New("You cannot sign up without sharing your email with NHC."), http.StatusNotAcceptable)
@@ -198,7 +195,6 @@ func LoginWithFacebook(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		ctx.Println("Made it to setting token.")
 		SetToken(w, r, user)
 	}
 }
@@ -221,17 +217,15 @@ func LoginWithGoogle(w http.ResponseWriter, r *http.Request) {
 		Type("form").
 		End()
 
-	ctx.WithField("code", res.StatusCode).Info("Status Code.")
 	if res.StatusCode != 200 {
 		var errorData map[string]interface{}
 		json.Unmarshal([]byte(body), &errorData)
-
+		ctx.WithField("err", errorData).Error("Failed to authenticate with Google.")
 		ServeJSON(w, r, &Response{
 			"message": errorData["error"].(string),
 		}, 500)
 		return
 	}
-	ctx.Println("End of Step 1.")
 	// Step 2. Retrieve profile information about the current user.
 	var atData accessTokenData
 	err := json.Unmarshal([]byte(body), &atData)
@@ -246,7 +240,7 @@ func LoginWithGoogle(w http.ResponseWriter, r *http.Request) {
 	u.Path = peopleApiPath
 	u.RawQuery = qs.Encode()
 	urlStr := fmt.Sprintf("%v", u)
-	ctx.WithField("url", urlStr).Info("Url String.")
+
 	resProfile, body, _ := gorequest.New().Get(urlStr).End()
 
 	var profileData map[string]interface{}
@@ -260,10 +254,8 @@ func LoginWithGoogle(w http.ResponseWriter, r *http.Request) {
 		}, 500)
 		return
 	}
-	ctx.WithField("profile", profileData).Info("Profile Data.")
 
 	db := GetDB(w, r)
-	ctx.Println("End of Step 2.")
 	if IsTokenSet(r) {
 		// Step 3a. Link user accounts.
 		existingUser, errM := FindUserByProvider(db, "google", profileData["sub"].(string))
