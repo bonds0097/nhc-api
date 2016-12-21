@@ -195,7 +195,6 @@ func (u *User) Save(db *mgo.Database) (errM *Error) {
 		return
 	}
 
-	ctx.WithField("user", u.Email).Info("Created new user.")
 	return
 }
 

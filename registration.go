@@ -182,6 +182,7 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 
 		// Send confirmation e-mail.
 		go SendRegistrationConfirmation(user)
+		ctx.WithField("user", user.Email).Info("User successfully registered.")
 
 		ServeJSON(w, r, &Response{"message": "Registration complete."}, http.StatusOK)
 		return

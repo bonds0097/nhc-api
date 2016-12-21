@@ -42,6 +42,8 @@ func Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func SignUp(w http.ResponseWriter, r *http.Request) {
+	ctx := logger.WithField("method", "SignUp")
+
 	type UserData struct {
 		FirstName string `json:"firstName"`
 		LastName  string `json:"lastName"`
@@ -82,10 +84,14 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 	// Send confirmation e-mail if all went well.
 	go SendVerificationMail(user)
 
+	ctx.WithField("user", user.Email).Info("User signed up but needs confirmation.")
+
 	SetToken(w, r, user)
 }
 
 func Verify(w http.ResponseWriter, r *http.Request) {
+	ctx := logger.WithField("method", "Verify")
+
 	type Message struct {
 		Code string `json:"code"`
 	}
@@ -110,6 +116,8 @@ func Verify(w http.ResponseWriter, r *http.Request) {
 		HandleModelError(w, r, errM)
 		return
 	}
+
+	ctx.WithField("user", user.Email).Info("User successfully verified.")
 
 	if !IsTokenSet(r) {
 		SetToken(w, r, user)
@@ -182,6 +190,8 @@ func ForgotPassword(w http.ResponseWriter, r *http.Request) {
 }
 
 func ResetPassword(w http.ResponseWriter, r *http.Request) {
+	ctx := logger.WithField("method", "ResetPassword")
+
 	type Message struct {
 		Code            string `json:"code"`
 		NewPassword     string `json:"newPassword"`
@@ -216,6 +226,8 @@ func ResetPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ctx.WithField("user", user.Email).Info("User successfully changed password.")
+
 	if !IsTokenSet(r) {
 		SetToken(w, r, user)
 		return
@@ -226,6 +238,8 @@ func ResetPassword(w http.ResponseWriter, r *http.Request) {
 }
 
 func SetToken(w http.ResponseWriter, r *http.Request, user *User) {
+	ctx := logger.WithField("method", "SetToken")
+
 	t := jwt.New(jwt.GetSigningMethod("RS256"))
 	t.Claims["ID"] = user.ID.Hex()
 	t.Claims["iat"] = time.Now().Unix()
@@ -239,6 +253,7 @@ func SetToken(w http.ResponseWriter, r *http.Request, user *User) {
 	db := GetDB(w, r)
 	user.LastLogin = time.Now()
 	user.Save(db)
+	ctx.WithField("user", user.Email).Debug("User token set.")
 
 	ServeJSON(w, r, &Response{"token": tokenString}, http.StatusOK)
 	return

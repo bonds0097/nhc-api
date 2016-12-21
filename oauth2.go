@@ -159,6 +159,7 @@ func LoginWithFacebook(w http.ResponseWriter, r *http.Request) {
 			HandleModelError(w, r, errM)
 			return
 		}
+		ctx.WithField("user", user.Email).Info("Facebook user signed in.")
 
 		SetToken(w, r, user)
 	} else {
@@ -194,6 +195,8 @@ func LoginWithFacebook(w http.ResponseWriter, r *http.Request) {
 			HandleModelError(w, r, errM)
 			return
 		}
+
+		ctx.WithField("user", user.Email).Info("Facebook user created.")
 
 		SetToken(w, r, user)
 	}
@@ -296,6 +299,8 @@ func LoginWithGoogle(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		ctx.WithField("user", user.Email).Info("Google user signed in.")
+
 		SetToken(w, r, user)
 
 	} else {
@@ -330,6 +335,8 @@ func LoginWithGoogle(w http.ResponseWriter, r *http.Request) {
 			HandleModelError(w, r, errM)
 			return
 		}
+
+		ctx.WithField("user", user.Email).Info("Google user created")
 
 		SetToken(w, r, user)
 	}
