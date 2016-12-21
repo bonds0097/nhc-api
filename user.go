@@ -181,10 +181,13 @@ func EditUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u *User) Save(db *mgo.Database) (errM *Error) {
+	ctx := logger.WithField("method", "User_Save")
+
 	uC := db.C("users")
 	_, err := uC.UpsertId(u.ID, bson.M{"$set": u})
 	if err != nil {
 		if mgo.IsDup(err) {
+			ctx.WithError(err).WithField("user", u.Email).Warn("Failed to create user. User already exists.")
 			errM = &Error{Internal: false, Reason: errors.New("That user already exists. Please login first."), Code: http.StatusConflict}
 		} else {
 			errM = &Error{Internal: true, Reason: errors.New(fmt.Sprintf("Error updating user: %s\n", err))}
@@ -241,6 +244,8 @@ func FindLimitedUsers(db *mgo.Database, u *User) (users []LimitedUser, errM *Err
 }
 
 func CreateUser(db *mgo.Database, u *User) *Error {
+	ctx := logger.WithField("method", "CreateUser")
+
 	uC := db.C("users")
 	pwHash, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
 	if err != nil {
@@ -252,6 +257,7 @@ func CreateUser(db *mgo.Database, u *User) *Error {
 	u.LastLogin = time.Now()
 	err = uC.Insert(u)
 	if mgo.IsDup(err) {
+		ctx.WithError(err).WithField("user", u.Email).Warn("Failed to create user. User already exists.")
 		return &Error{Reason: errors.New("User already exists. Please log in instead."), Internal: false, Code: 409}
 	}
 	return nil
