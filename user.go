@@ -269,16 +269,15 @@ func AuthUser(db *mgo.Database, email, password string) (*User, *Error) {
 	uC := db.C("users")
 	user := &User{}
 	err := uC.Find(bson.M{"email": email}).One(user)
-	if err != nil {
-		if err == mgo.ErrNotFound {
-			ctx.WithError(err).WithField("email", email).Warn("User autentication failed because user does not exist.")
-			return nil, &Error{Reason: errors.New("User wasn't found on our servers"), Internal: false}
-		}
+
+	if err == mgo.ErrNotFound || user.ID == "" {
+		ctx.WithError(err).WithField("email", email).Warn("User autentication failed because user does not exist.")
+		return nil, &Error{Reason: errors.New("User wasn't found on our servers"), Internal: false}
+	} else if err != nil {
+
 		return nil, &Error{Reason: err, Internal: true}
 	}
-	if user.ID == "" {
-		return nil, &Error{Reason: errors.New("No user found"), Internal: false}
-	}
+
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
 		ctx.WithError(err).WithField("email", email).Warn("User authentication failed due to bad password.")
@@ -294,10 +293,8 @@ func FindUserByQuery(db *mgo.Database, query bson.M) (*User, *Error) {
 	uC := db.C("users")
 	user := &User{}
 	err := uC.Find(query).One(user)
-	if err == mgo.ErrNotFound {
+	if err == mgo.ErrNotFound || user.ID == "" {
 		ctx.WithError(err).WithField("query", query).Warn("User not found.")
-		return nil, &Error{Reason: errors.New("No user found."), Internal: false, Code: http.StatusNotFound}
-	} else if user.ID == "" {
 		return nil, &Error{Reason: errors.New("No user found."), Internal: false, Code: http.StatusNotFound}
 	} else if err != nil {
 		return nil, &Error{Reason: err, Internal: true}
@@ -311,17 +308,15 @@ func FindUserById(db *mgo.Database, id bson.ObjectId) (*User, *Error) {
 	uC := db.C("users")
 	user := &User{}
 	err := uC.FindId(id).One(user)
-	if err != nil {
-		if err == mgo.ErrNotFound {
-			ctx.WithError(err).WithField("user", id).Warn("User not found.")
-			return nil, &Error{Reason: errors.New("User not found."), Internal: false, Code: http.StatusUnauthorized}
-		}
+
+	if err == mgo.ErrNotFound || user.ID == "" {
+		ctx.WithError(err).WithField("user", id).Warn("User not found.")
+		return nil, &Error{Reason: errors.New("User not found."), Internal: false, Code: http.StatusUnauthorized}
+	} else if err != nil {
 
 		return nil, &Error{Reason: fmt.Errorf("mGo error: %s\n", err), Internal: true}
-
-	} else if user.ID == "" {
-		return nil, &Error{Reason: errors.New("No user found."), Internal: false, Code: http.StatusUnauthorized}
 	}
+
 	return user, nil
 }
 
