@@ -267,8 +267,10 @@ func (q *Question) AnsweredBy(u *User) bool {
 func FindEnabledQuestion(db *mgo.Database) (q *Question, errM *Error) {
 	c := db.C("questions")
 	err := c.Find(bson.M{"enabled": true}).One(&q)
-	if err != nil {
-		errM = &Error{Reason: errors.New(fmt.Sprintf("Error retrieving enabled question: %s\n", err))}
+	if err == mgo.ErrNotFound {
+		return nil, nil
+	} else if err != nil {
+		errM = &Error{Reason: fmt.Errorf("Error retrieving enabled question: %s\n", err)}
 		return
 	}
 
