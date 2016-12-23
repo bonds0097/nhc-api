@@ -171,6 +171,7 @@ func LoginWithFacebook(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if existingUser != nil {
+			ctx.WithField("user", existingUser.Email).Info("User logged in with Facebook.")
 			SetToken(w, r, existingUser)
 			return
 		}
@@ -274,7 +275,6 @@ func LoginWithGoogle(w http.ResponseWriter, r *http.Request) {
 
 	var profileData map[string]interface{}
 	err = json.Unmarshal([]byte(body), &profileData)
-	ctx.WithField("code", resProfile.StatusCode).Info("Status Code.")
 	if resProfile.StatusCode != 200 {
 		ctx.WithField("response", resProfile).
 			Error("Received a non-200 response when requesting profile data from google.")
@@ -338,6 +338,7 @@ func LoginWithGoogle(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if existingUser != nil {
+			ctx.WithField("user", existingUser.Email).Info("User logged in with Google.")
 			SetToken(w, r, existingUser)
 			return
 		}
