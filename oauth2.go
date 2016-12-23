@@ -165,18 +165,44 @@ func LoginWithFacebook(w http.ResponseWriter, r *http.Request) {
 	} else {
 		// Step 3b. Create a new user account or return an existing one.
 		existingUser, errM := FindUserByProvider(db, "facebook", profileData["id"].(string))
-		if existingUser != nil {
-			SetToken(w, r, existingUser)
-			return
-		}
 		if errM != nil && errM.Code != http.StatusNotFound {
 			HandleModelError(w, r, errM)
+			return
+		}
+
+		if existingUser != nil {
+			SetToken(w, r, existingUser)
 			return
 		}
 
 		// Make sure we have the user's e-mail or error out.
 		if profileData["email"] == nil {
 			BR(w, r, errors.New("You cannot sign up without sharing your email with NHC."), http.StatusNotAcceptable)
+			return
+		}
+
+		// If this user already exists w/ a different provider , just add the facebook data and save.
+		existingUser, errM = FindUserByEmail(db, profileData["email"].(string))
+		if errM != nil && errM.Code != http.StatusNotFound {
+			HandleModelError(w, r, errM)
+			return
+		}
+
+		if existingUser != nil {
+			existingUser.Facebook = profileData["id"].(string)
+
+			if existingUser.Picture == "" {
+				existingUser.Picture = "https://graph.facebook.com/v2.5/" + profileData["id"].(string) + "/picture?type=large"
+			}
+
+			errM := existingUser.Save(db)
+			if errM != nil {
+				HandleModelError(w, r, errM)
+				return
+			}
+			ctx.WithField("user", existingUser.Email).Info("Existing user updated with facebook profile data.")
+
+			SetToken(w, r, existingUser)
 			return
 		}
 
@@ -306,12 +332,38 @@ func LoginWithGoogle(w http.ResponseWriter, r *http.Request) {
 	} else {
 		// Step 3b. Create a new user account or return an existing one.
 		existingUser, errM := FindUserByProvider(db, "google", profileData["sub"].(string))
+		if errM != nil && errM.Code != http.StatusNotFound {
+			HandleModelError(w, r, errM)
+			return
+		}
+
 		if existingUser != nil {
 			SetToken(w, r, existingUser)
 			return
 		}
+
+		// If this user already exists w/ a different provider , just add the google data and save.
+		existingUser, errM = FindUserByEmail(db, profileData["email"].(string))
 		if errM != nil && errM.Code != http.StatusNotFound {
 			HandleModelError(w, r, errM)
+			return
+		}
+
+		if existingUser != nil {
+			existingUser.Google = profileData["sub"].(string)
+
+			if existingUser.Picture == "" {
+				existingUser.Picture = strings.Replace(profileData["picture"].(string), "sz=50", "sz=200", -1)
+			}
+
+			errM := existingUser.Save(db)
+			if errM != nil {
+				HandleModelError(w, r, errM)
+				return
+			}
+			ctx.WithField("user", existingUser.Email).Info("Existing user updated with google profile data.")
+
+			SetToken(w, r, existingUser)
 			return
 		}
 
@@ -343,5 +395,5 @@ func LoginWithGoogle(w http.ResponseWriter, r *http.Request) {
 }
 
 func NewClient() *http.Client {
-	return &http.Client{}
+	return &http.Client{Timeout: 5 * time.Second}
 }
