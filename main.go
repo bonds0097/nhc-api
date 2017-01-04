@@ -21,19 +21,22 @@ var (
 )
 
 var (
-	PORT        string
-	MONGODB_URL = "localhost"
-	MAIL_PORT   = 25
-	ENV         string
-	INIT        bool
-	APP_DIR     string
-	URL         string
-	GLOBALS     *Globals
-	verifyKey   []byte
-	signKey     []byte
-	sslCertData []byte
-	sslKeyData  []byte
-	resetUsers  bool
+	SMTPHost     string
+	SMTPPort     int
+	SMTPUsername string
+	SMTPPassword string
+	PORT         string
+	MONGODB_URL  = "localhost"
+	ENV          string
+	INIT         bool
+	APP_DIR      string
+	URL          string
+	GLOBALS      *Globals
+	verifyKey    []byte
+	signKey      []byte
+	sslCertData  []byte
+	sslKeyData   []byte
+	resetUsers   bool
 )
 
 func main() {
@@ -53,13 +56,18 @@ func main() {
 		MONGODB_URL = m
 	}
 
-	if s := os.Getenv("MAIL_PORT"); s != "" {
+	SMTPHost = os.Getenv("SMTP_HOST")
+
+	if s := os.Getenv("SMTP_PORT"); s != "" {
 		port, err := strconv.Atoi(s)
 		if err != nil {
 			ctx.Fatalln("Could not read Mail Port from environment.")
 		}
-		MAIL_PORT = port
+		SMTPPort = port
 	}
+
+	SMTPUsername = os.Getenv("SMTP_USERNAME")
+	SMTPPassword = os.Getenv("SMTP_PASSWORD")
 
 	verifyKey, err = loadPEMBlockFromEnv("JWT_PUB_KEY")
 	if err != nil {

@@ -71,7 +71,12 @@ func SendBulkMail(recipients []string, subject string, body string) (errM *Error
 		m.SetHeader("Subject", subject)
 		m.SetBody("text/html", body)
 
-		d := gomail.Dialer{Host: "smtp-relay.gmail.com", Port: 587}
+		d := gomail.Dialer{
+			Host:     SMTPHost,
+			Port:     SMTPPort,
+			Username: SMTPUsername,
+			Password: SMTPPassword,
+		}
 		// d.TLSConfig = &tls.Config{InsecureSkipVerify: true}
 		if err := d.DialAndSend(m); err != nil {
 			ctx.WithError(err).WithField("recipients", j-i).Error("Error sending bulk mail.")
@@ -97,7 +102,12 @@ func SendMail(recipient string, subject string, body string) (errM *Error) {
 	m.SetHeader("Subject", subject)
 	m.SetBody("text/html", body)
 
-	d := gomail.Dialer{Host: "smtp-relay.gmail.com", Port: 587}
+	d := gomail.Dialer{
+		Host:     SMTPHost,
+		Port:     SMTPPort,
+		Username: SMTPUsername,
+		Password: SMTPPassword,
+	}
 send:
 	d.TLSConfig = &tls.Config{InsecureSkipVerify: true}
 	if err := d.DialAndSend(m); err != nil {
