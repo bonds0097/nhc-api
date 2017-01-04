@@ -66,7 +66,7 @@ func SendBulkMail(recipients []string, subject string, body string) (errM *Error
 			j = len(recipients)
 		}
 		m := gomail.NewMessage()
-		m.SetHeader("From", "do-not-reply@nutritionhabitchallenge.com")
+		m.SetHeader("From", "info@nutritionhabitchallenge.com")
 		m.SetHeader("Bcc", recipients[i:j]...)
 		m.SetHeader("Subject", subject)
 		m.SetBody("text/html", body)
@@ -97,7 +97,7 @@ func SendMail(recipient string, subject string, body string) (errM *Error) {
 	var retryCount int
 
 	m := gomail.NewMessage()
-	m.SetHeader("From", "do-not-reply@nutritionhabitchallenge.com")
+	m.SetHeader("From", "info@nutritionhabitchallenge.com")
 	m.SetHeader("To", recipient)
 	m.SetHeader("Subject", subject)
 	m.SetBody("text/html", body)
