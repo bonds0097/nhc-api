@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"time"
 
 	"gopkg.in/gomail.v2"
 )
@@ -60,33 +61,17 @@ The NHC Team</p>
 
 func SendBulkMail(recipients []string, subject string, body string) (errM *Error) {
 	ctx := logger.WithField("method", "SendBulkMail")
-	for i := 0; i < len(recipients); i += 50 {
-		j := i + 50
-		if j > len(recipients) {
-			j = len(recipients)
-		}
-		m := gomail.NewMessage()
-		m.SetHeader("From", "info@nutritionhabitchallenge.com")
-		m.SetHeader("Bcc", recipients[i:j]...)
-		m.SetHeader("Subject", subject)
-		m.SetBody("text/html", body)
 
-		d := gomail.Dialer{
-			Host:     SMTPHost,
-			Port:     SMTPPort,
-			Username: SMTPUsername,
-			Password: SMTPPassword,
+	var errCount int
+	for _, recipient := range recipients {
+		if errM := SendMail(recipient, subject, body); errM != nil {
+			errCount++
 		}
-		// d.TLSConfig = &tls.Config{InsecureSkipVerify: true}
-		if err := d.DialAndSend(m); err != nil {
-			ctx.WithError(err).WithField("recipients", j-i).Error("Error sending bulk mail.")
-			errM = &Error{Internal: true, Reason: errors.New(fmt.Sprintf("Error sending mail: %s\n", err))}
-			return
-		}
+		time.Sleep(250 * time.Millisecond)
 	}
 
-	ctx.WithField("recipients", len(recipients)).WithField("subject", subject).
-		Info("Sent bulk mail successfully.")
+	ctx.WithField("errors", errCount).WithField("recipients", len(recipients)).
+		WithField("subject", subject).Info("Finished sending bulk e-mail.")
 
 	return nil
 }
