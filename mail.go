@@ -60,8 +60,8 @@ The NHC Team</p>
 
 func SendBulkMail(recipients []string, subject string, body string) (errM *Error) {
 	ctx := logger.WithField("method", "SendBulkMail")
-	for i := 0; i < len(recipients); i += 500 {
-		j := i + 500
+	for i := 0; i < len(recipients); i += 50 {
+		j := i + 50
 		if j > len(recipients) {
 			j = len(recipients)
 		}
