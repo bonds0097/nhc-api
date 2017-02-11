@@ -183,6 +183,7 @@ func main() {
 				continue
 			}
 			rpSucCount++
+			time.Sleep(100 * time.Millisecond)
 		}
 		logrus.Infof("Successful reset pw e-mails: %d. Failed: %d", rpSucCount, rpErrCount)
 	}
