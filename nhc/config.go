@@ -3,8 +3,6 @@ package nhc
 import (
 	"os"
 
-	mgo "gopkg.in/mgo.v2"
-
 	"github.com/Sirupsen/logrus"
 	"github.com/bshuster-repo/logrus-logstash-hook"
 )
@@ -29,7 +27,6 @@ var (
 	SMTPUsername string
 	SMTPPassword string
 	ENV          string
-	DBSession    *mgo.Session
 )
 
 func LoadConfig() {
