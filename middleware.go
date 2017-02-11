@@ -1,4 +1,4 @@
-package nhc
+package main
 
 import (
 	"errors"
@@ -22,11 +22,11 @@ func HeaderMiddleware() negroni.Handler {
 }
 
 func JWTMiddleware() negroni.Handler {
-	ctx := Logger.WithField("method", "JWTMiddleware")
+	ctx := logger.WithField("method", "JWTMiddleware")
 	return negroni.HandlerFunc(func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 		if h := r.Header.Get("Authorization"); h != "" {
 			token, err := jwt.ParseFromRequest(r, func(token *jwt.Token) (interface{}, error) {
-				return VerifyKey, nil
+				return verifyKey, nil
 			})
 
 			switch err.(type) {

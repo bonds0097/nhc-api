@@ -1,4 +1,4 @@
-package nhc
+package main
 
 type Status int
 

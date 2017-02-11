@@ -1,4 +1,4 @@
-package nhc
+package main
 
 import (
 	"encoding/json"
@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/asaskevich/govalidator"
 	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -182,7 +181,7 @@ func EditUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u *User) Save(db *mgo.Database) (errM *Error) {
-	ctx := Logger.WithField("method", "User_Save")
+	ctx := logger.WithField("method", "User_Save")
 
 	uC := db.C("users")
 	_, err := uC.UpsertId(u.ID, bson.M{"$set": u})
@@ -245,13 +244,7 @@ func FindLimitedUsers(db *mgo.Database, u *User) (users []LimitedUser, errM *Err
 }
 
 func CreateUser(db *mgo.Database, u *User) *Error {
-	ctx := Logger.WithField("method", "CreateUser")
-
-	// Ensure user has valid e-mail address.
-	if !govalidator.IsEmail(u.Email) {
-		ctx.WithField("user", u.Email).Warn("Failed to create user. Invalid e-mail address.")
-		return &Error{Reason: errors.New("Invalid e-mail address."), Internal: false, Code: 400}
-	}
+	ctx := logger.WithField("method", "CreateUser")
 
 	uC := db.C("users")
 	pwHash, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
@@ -271,7 +264,7 @@ func CreateUser(db *mgo.Database, u *User) *Error {
 }
 
 func AuthUser(db *mgo.Database, email, password string) (*User, *Error) {
-	ctx := Logger.WithField("method", "AuthUser")
+	ctx := logger.WithField("method", "AuthUser")
 
 	uC := db.C("users")
 	user := &User{}
@@ -295,7 +288,7 @@ func AuthUser(db *mgo.Database, email, password string) (*User, *Error) {
 }
 
 func FindUserByQuery(db *mgo.Database, query bson.M) (*User, *Error) {
-	ctx := Logger.WithField("method", "FindUserByQuery").WithField("query", query)
+	ctx := logger.WithField("method", "FindUserByQuery").WithField("query", query)
 
 	uC := db.C("users")
 	user := &User{}
@@ -311,7 +304,7 @@ func FindUserByQuery(db *mgo.Database, query bson.M) (*User, *Error) {
 }
 
 func FindUserById(db *mgo.Database, id bson.ObjectId) (*User, *Error) {
-	ctx := Logger.WithField("method", "FindUserById").WithField("id", id)
+	ctx := logger.WithField("method", "FindUserById").WithField("id", id)
 
 	uC := db.C("users")
 	user := &User{}

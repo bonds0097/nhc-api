@@ -1,4 +1,4 @@
-package nhc
+package main
 
 import (
 	"encoding/json"
@@ -42,7 +42,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func SignUp(w http.ResponseWriter, r *http.Request) {
-	ctx := Logger.WithField("method", "SignUp")
+	ctx := logger.WithField("method", "SignUp")
 
 	type UserData struct {
 		FirstName string `json:"firstName"`
@@ -90,7 +90,7 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 }
 
 func Verify(w http.ResponseWriter, r *http.Request) {
-	ctx := Logger.WithField("method", "Verify")
+	ctx := logger.WithField("method", "Verify")
 
 	type Message struct {
 		Code string `json:"code"`
@@ -190,7 +190,7 @@ func ForgotPassword(w http.ResponseWriter, r *http.Request) {
 }
 
 func ResetPassword(w http.ResponseWriter, r *http.Request) {
-	ctx := Logger.WithField("method", "ResetPassword")
+	ctx := logger.WithField("method", "ResetPassword")
 
 	type Message struct {
 		Code            string `json:"code"`
@@ -238,13 +238,13 @@ func ResetPassword(w http.ResponseWriter, r *http.Request) {
 }
 
 func SetToken(w http.ResponseWriter, r *http.Request, user *User) {
-	ctx := Logger.WithField("method", "SetToken")
+	ctx := logger.WithField("method", "SetToken")
 
 	t := jwt.New(jwt.GetSigningMethod("RS256"))
 	t.Claims["ID"] = user.ID.Hex()
 	t.Claims["iat"] = time.Now().Unix()
 	t.Claims["exp"] = time.Now().Add(time.Minute * 60 * 24 * 14).Unix()
-	tokenString, err := t.SignedString(SignKey)
+	tokenString, err := t.SignedString(signKey)
 	if err != nil {
 		ISR(w, r, err)
 		return

@@ -1,4 +1,4 @@
-package nhc
+package main
 
 import (
 	"encoding/json"
@@ -22,7 +22,7 @@ func AddSpaces(input string) (output string) {
 }
 
 func QueryGoogleProfanityFilter(query string) (isProfane bool) {
-	ctx := Logger.WithField("method", "QueryGoogleProfanityFilter")
+	ctx := logger.WithField("method", "QueryGoogleProfanityFilter")
 	type ApiResponse struct {
 		Response string `json:"response"`
 	}
