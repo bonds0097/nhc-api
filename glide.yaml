@@ -25,5 +25,3 @@ import:
   - bson
 - package: github.com/Sirupsen/logrus
   version: ~0.11.0
-- package: github.com/asaskevich/govalidator
-  version: v5

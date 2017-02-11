@@ -8,23 +8,46 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/bonds0097/nhc-api/nhc"
+	"github.com/bshuster-repo/logrus-logstash-hook"
+	"github.com/codegangsta/negroni"
+	"github.com/gorilla/mux"
+	"github.com/rs/cors"
+)
+
+const DBNAME = "nhc"
+
+var (
+	logger *logrus.Logger
 )
 
 var (
-	PORT        string
-	MONGODB_URL = "localhost"
-	INIT        bool
-	URL         string
-	sslCertData []byte
-	sslKeyData  []byte
-	resetUsers  bool
+	SMTPHost     string
+	SMTPPort     int
+	SMTPUsername string
+	SMTPPassword string
+	PORT         string
+	MONGODB_URL  = "localhost"
+	ENV          string
+	INIT         bool
+	APP_DIR      string
+	URL          string
+	GLOBALS      *Globals
+	verifyKey    []byte
+	signKey      []byte
+	sslCertData  []byte
+	sslKeyData   []byte
+	resetUsers   bool
 )
 
 func main() {
-	nhc.LoadConfig()
-
-	ctx := nhc.Logger.WithFields(logrus.Fields{
+	logger = logrus.New()
+	hook, err := logrus_logstash.NewHook("udp", os.Getenv("LOGSTASH_ADDR"), "nhc-api")
+	if err != nil {
+		logger.WithError(err).Warn("Failed to set up logstash hook.")
+	} else {
+		logger.Hooks.Add(hook)
+	}
+	ctx := logger.WithFields(logrus.Fields{
 		"method": "main",
 	})
 
@@ -33,78 +56,151 @@ func main() {
 		MONGODB_URL = m
 	}
 
-	nhc.SMTPHost = os.Getenv("SMTP_HOST")
+	SMTPHost = os.Getenv("SMTP_HOST")
 
 	if s := os.Getenv("SMTP_PORT"); s != "" {
 		port, err := strconv.Atoi(s)
 		if err != nil {
 			ctx.Fatalln("Could not read Mail Port from environment.")
 		}
-		nhc.SMTPPort = port
+		SMTPPort = port
 	}
 
-	nhc.SMTPUsername = os.Getenv("SMTP_USERNAME")
-	nhc.SMTPPassword = os.Getenv("SMTP_PASSWORD")
+	SMTPUsername = os.Getenv("SMTP_USERNAME")
+	SMTPPassword = os.Getenv("SMTP_PASSWORD")
 
-	var err error
-	nhc.VerifyKey, err = loadPEMBlockFromEnv("JWT_PUB_KEY")
+	verifyKey, err = loadPEMBlockFromEnv("JWT_PUB_KEY")
 	if err != nil {
 		ctx.WithError(err).Fatal("Failed to load JWT Verification key.")
 	}
 
-	nhc.SignKey, err = loadPEMBlockFromEnv("JWT_PRIV_KEY")
+	signKey, err = loadPEMBlockFromEnv("JWT_PRIV_KEY")
 	if err != nil {
 		ctx.WithError(err).Fatal("Failed to load JWT Signing key.")
 	}
 
 	flag.StringVar(&PORT, "port", "8443", "Port to run on.")
-	flag.StringVar(&nhc.ENV, "env", "prod", "Environment to deploy to. Options: prod, test, or dev")
+	flag.StringVar(&ENV, "env", "prod", "Environment to deploy to. Options: prod, test, or dev")
 	flag.BoolVar(&INIT, "init", false, "Initialize the database on startup?")
-	flag.StringVar(&nhc.APP_DIR, "dir", "/etc/nhc-api/", "Application directory")
+	flag.StringVar(&APP_DIR, "dir", "/etc/nhc-api/", "Application directory")
 	flag.BoolVar(&resetUsers, "reset-users", false, "Reset users to unregistered?")
 	flag.Parse()
 
-	if nhc.ENV == "prod" {
+	if ENV == "prod" {
 		URL = "api.nutritionhabitchallenge.com"
-	} else if nhc.ENV == "test" {
+	} else if ENV == "test" {
 		URL = "test.nutritionhabitchallenge.com"
 	} else {
 		URL = "localhost"
 	}
 
-	nhc.DBSession = nhc.DBConnect(MONGODB_URL)
+	dbSession := DBConnect(MONGODB_URL)
 
 	if INIT {
-		err := nhc.DBInit(nhc.DBSession)
+		err := DBInit(dbSession)
 		if err != nil {
 			ctx.WithError(err).Fatal("Failed to initialize DB.")
 		}
 	}
 
-	err = nhc.DBEnsureIndices(nhc.DBSession)
+	err = DBEnsureIndices(dbSession)
 	if err != nil {
 		ctx.WithError(err).Fatalf("Error ensuring DB indices.")
 	}
 
-	nhc.GLOBALS, err = nhc.FindGlobals(nhc.DBSession.DB(nhc.DBNAME))
+	GLOBALS, err = FindGlobals(dbSession.DB(DBNAME))
 	if err != nil {
 		ctx.Fatalln(err)
 	}
 
 	// This has to happen after globals are loaded.
-	err = nhc.DBEnsureIntegrity(nhc.DBSession)
+	err = DBEnsureIntegrity(dbSession)
 	if err != nil {
 		ctx.WithError(err).Fatalf("Error ensuring DB integrity.")
 	}
 
 	if resetUsers {
-		err = nhc.ResetUsers(nhc.DBSession)
+		err = ResetUsers(dbSession)
 		if err != nil {
 			ctx.WithError(err).Fatal("Error reseting users to unregistered.")
 		}
 	}
 
-	n := nhc.SetupAPI()
+	corsMiddleware := cors.New(cors.Options{
+		AllowedOrigins: []string{
+			"http://localhost:9000",
+			"https://nutritionhabitchallenge.com",
+			"https://www.nutritionhabitchallenge.com",
+			"https://test.nutritionhabitchallenge.com"},
+		AllowCredentials: true,
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
+		AllowedHeaders:   []string{"*"},
+	})
+
+	router := mux.NewRouter().StrictSlash(true)
+
+	api := router.PathPrefix("/api").Subrouter()
+	api.HandleFunc("/globals", GetGlobals).Methods("GET")
+	api.HandleFunc("/globals", SaveGlobals).Methods("POST")
+
+	api.HandleFunc("/commitments", GetCommitments).Methods("GET")
+
+	api.HandleFunc("/organizations", GetOrganizations).Methods("GET")
+	api.HandleFunc("/admin/organizations", AddOrganization).Methods("POST")
+	api.HandleFunc("/admin/organizations", EditOrganization).Methods("PUT")
+	api.HandleFunc("/admin/organizations/{id}", DeleteOrganization).Methods("DELETE")
+	api.HandleFunc("/admin/organizations/merge", MergeOrganizations).Methods("POST")
+
+	api.HandleFunc("/registration", RegisterUser).Methods("POST")
+
+	api.HandleFunc("/user", UpdateSelf).Methods("PUT")
+	api.HandleFunc("/admin/user", GetUsers).Methods("GET")
+	api.HandleFunc("/admin/user", EditUser).Methods("PUT")
+
+	api.HandleFunc("/admin/message", SendMessage).Methods("POST")
+
+	api.HandleFunc("/news", FetchNews).Methods("GET")
+	api.HandleFunc("/admin/news", ListNews).Methods("GET")
+	api.HandleFunc("/admin/news", AddNews).Methods("POST")
+	api.HandleFunc("/admin/news/{id}", DeleteNews).Methods("DELETE")
+	api.HandleFunc("/admin/news/{id}/publish", PublishNews).Methods("PUT")
+	api.HandleFunc("/admin/news/{id}/unpublish", UnpublishNews).Methods("PUT")
+
+	api.HandleFunc("/bonus-question", FetchQuestion).Methods("GET")
+	api.HandleFunc("/bonus-question", AnswerQuestion).Methods("POST")
+	api.HandleFunc("/admin/bonus-question", GetQuestions).Methods("GET")
+	api.HandleFunc("/admin/bonus-question", CreateQuestion).Methods("POST")
+	api.HandleFunc("/admin/bonus-question/{id}", DeleteQuestion).Methods("DELETE")
+	api.HandleFunc("/admin/bonus-question/{id}/enable", EnableQuestion).Methods("PUT")
+	api.HandleFunc("/admin/bonus-question/disable", DisableQuestion).Methods("PUT")
+
+	api.HandleFunc("/participant", GetParticipants).Methods("GET")
+	api.HandleFunc("/participant/scorecard", UpdateScorecard).Methods("PUT")
+	api.HandleFunc("/admin/participant", GetParticipantsAdmin).Methods("GET")
+
+	api.HandleFunc("/faq", GetFaqs).Methods("GET")
+	api.HandleFunc("/admin/faq", AddFaq).Methods("POST")
+	api.HandleFunc("/admin/faq", EditFaq).Methods("PUT")
+	api.HandleFunc("/admin/faq/{id}", DeleteFaq).Methods("DELETE")
+
+	authAPI := router.PathPrefix("/auth").Subrouter()
+	authAPI.HandleFunc("/", GetAuthStatus).Methods("GET")
+	authAPI.HandleFunc("/login", Login).Methods("POST")
+	authAPI.HandleFunc("/signup", SignUp).Methods("POST")
+	authAPI.HandleFunc("/verify", Verify).Methods("POST")
+	authAPI.HandleFunc("/verify", ResendVerify).Methods("GET")
+	authAPI.HandleFunc("/facebook", LoginWithFacebook).Methods("POST")
+	authAPI.HandleFunc("/google", LoginWithGoogle).Methods("POST")
+	authAPI.HandleFunc("/password/forgot", ForgotPassword).Methods("POST")
+	authAPI.HandleFunc("/password/reset", ResetPassword).Methods("POST")
+
+	n := negroni.Classic()
+	n.Use(HeaderMiddleware())
+	n.Use(JWTMiddleware())
+	n.Use(DBMiddleware(dbSession))
+	n.Use(ParseFormMiddleware())
+	n.Use(corsMiddleware)
+	n.UseHandler(router)
 
 	// Start the servers based on whether or not HTTPS is enabled.
 	s := &http.Server{
@@ -115,7 +211,7 @@ func main() {
 		MaxHeaderBytes: 1 << 20,
 	}
 
-	if nhc.ENV == "prod" || nhc.ENV == "test" {
+	if ENV == "prod" || ENV == "test" {
 		// Load SSL Files
 		sslCertData, err = loadPEMBlockFromEnv("SSL_CERT")
 		if err != nil {

@@ -1,4 +1,4 @@
-package nhc
+package main
 
 import (
 	"encoding/json"
@@ -63,7 +63,7 @@ func newGoogleParams() *OAuth2Params {
 }
 
 func LoginWithFacebook(w http.ResponseWriter, r *http.Request) {
-	ctx := Logger.WithField("method", "LoginWithFacebook")
+	ctx := logger.WithField("method", "LoginWithFacebook")
 	apiUrl := "https://graph.facebook.com"
 	accessTokenPath := "/v2.5/oauth/access_token"
 	graphApiPath := "/v2.5/me"
@@ -230,7 +230,7 @@ func LoginWithFacebook(w http.ResponseWriter, r *http.Request) {
 }
 
 func LoginWithGoogle(w http.ResponseWriter, r *http.Request) {
-	ctx := Logger.WithField("method", "LoginWithGoogle")
+	ctx := logger.WithField("method", "LoginWithGoogle")
 
 	accessTokenUrl := "https://accounts.google.com/o/oauth2/token"
 	peopleApiUrl := "https://www.googleapis.com"

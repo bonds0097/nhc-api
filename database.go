@@ -1,4 +1,4 @@
-package nhc
+package main
 
 import (
 	"encoding/json"
@@ -15,7 +15,7 @@ import (
 )
 
 func DBConnect(address string) *mgo.Session {
-	ctx := Logger.WithField("method", "DBConnect")
+	ctx := logger.WithField("method", "DBConnect")
 	ctx.WithField("address", address).Info("Attempting to connect to mongodb server.")
 	session, err := mgo.Dial(address)
 	if err != nil {
@@ -89,7 +89,7 @@ func DBEnsureIndices(s *mgo.Session) (err error) {
 }
 
 func DBInit(s *mgo.Session) error {
-	ctx := Logger.WithField("method", "DBInit")
+	ctx := logger.WithField("method", "DBInit")
 	ctx.Println("*** Performing Database initialization. ***")
 	db := s.DB(DBNAME)
 
@@ -162,7 +162,7 @@ func DBInit(s *mgo.Session) error {
 
 // Basic data integrity checks and clean-up.
 func DBEnsureIntegrity(s *mgo.Session) error {
-	ctx := Logger.WithField("method", "DBEnsureIntegrity")
+	ctx := logger.WithField("method", "DBEnsureIntegrity")
 	ctx.Println("*** Performing Database integrity checks. ***")
 	db := s.DB(DBNAME)
 
@@ -206,7 +206,7 @@ func DBEnsureIntegrity(s *mgo.Session) error {
 
 // ResetUsers sets all registered users to unregistered.
 func ResetUsers(s *mgo.Session) error {
-	ctx := Logger.WithField("method", "ResetUsers")
+	ctx := logger.WithField("method", "ResetUsers")
 	db := s.DB(DBNAME)
 
 	c := db.C("users")

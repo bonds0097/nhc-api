@@ -1,8 +1,6 @@
-hash: 2ed9499def7ffd62a6c9b0f1ecbe1975bc7fdbbc77a17f54a7d7a4015b64e7c5
-updated: 2017-02-11T12:22:43.808304867-05:00
+hash: 54da2a15f8c6c4e21d05a6eb6f70dc82eac63ebbb2ffabebe3ef52b7ab6dc903
+updated: 2016-12-15T15:31:42.206277906-05:00
 imports:
-- name: github.com/asaskevich/govalidator
-  version: 7b3beb6df3c42abd3509abfc3bcacc0fbfb7c877
 - name: github.com/bshuster-repo/logrus-logstash-hook
   version: 544f72d23cd2536636193deff26b6190c47e10bb
 - name: github.com/codegangsta/negroni
@@ -16,7 +14,7 @@ imports:
 - name: github.com/gorilla/context
   version: 1ea25387ff6f684839d82767c1733ff4d4d15d0a
 - name: github.com/gorilla/mux
-  version: 392c28fe23e1c45ddba891b0320b3b5df220beea
+  version: 0eeaf8392f5b04950925b8a69fe70f110fa7cbfc
 - name: github.com/moul/http2curl
   version: 4e24498b31dba4683efb9d35c1c8a91e2eda28c8
 - name: github.com/parnurzeal/gorequest
@@ -26,7 +24,7 @@ imports:
 - name: github.com/rs/xhandler
   version: ed27b6fd65218132ee50cd95f38474a3d8a2cd12
 - name: github.com/Sirupsen/logrus
-  version: c078b1e43f58d563c74cebe63c85789e76ddb627
+  version: d26492970760ca5d33129d2d799e34be5c4782eb
 - name: golang.org/x/crypto
   version: 01be46f62051d02cb6a36c9b47b37b24e5758c81
   subpackages:

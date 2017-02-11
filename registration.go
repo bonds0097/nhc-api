@@ -1,4 +1,4 @@
-package nhc
+package main
 
 import (
 	"encoding/json"
@@ -9,7 +9,7 @@ import (
 )
 
 func RegisterUser(w http.ResponseWriter, r *http.Request) {
-	ctx := Logger.WithField("method", "RegisterUser")
+	ctx := logger.WithField("method", "RegisterUser")
 	if IsTokenSet(r) {
 		tokenData := GetToken(w, r)
 		db := GetDB(w, r)

@@ -1,4 +1,4 @@
-package nhc
+package main
 
 import (
 	"encoding/json"
@@ -18,7 +18,7 @@ type Organization struct {
 }
 
 func OrganizationExists(db *mgo.Database, org string) bool {
-	ctx := Logger.WithField("method", "OrganizationExists")
+	ctx := logger.WithField("method", "OrganizationExists")
 	c := db.C("organizations")
 	count, _ := c.Find(bson.M{"name": org}).Limit(1).Count()
 	if count > 0 {

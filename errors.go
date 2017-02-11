@@ -1,4 +1,4 @@
-package nhc
+package main
 
 const (
 	REQUIRED_ERROR       = "This is a required input."
