@@ -1,4 +1,4 @@
-package main
+package nhc
 
 import (
 	"bytes"
@@ -60,7 +60,7 @@ The NHC Team</p>
 `
 
 func SendBulkMail(recipients []string, subject string, body string) (errM *Error) {
-	ctx := logger.WithField("method", "SendBulkMail")
+	ctx := Logger.WithField("method", "SendBulkMail")
 
 	var errCount int
 	for _, recipient := range recipients {
@@ -77,7 +77,7 @@ func SendBulkMail(recipients []string, subject string, body string) (errM *Error
 }
 
 func SendMail(recipient string, subject string, body string) (errM *Error) {
-	ctx := logger.WithField("method", "SendMail")
+	ctx := Logger.WithField("method", "SendMail")
 
 	var retryCount int
 
