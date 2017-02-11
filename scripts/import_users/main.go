@@ -7,6 +7,8 @@ import (
 	"os"
 	"time"
 
+	"strings"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/bonds0097/nhc-api/nhc"
 )
@@ -57,9 +59,11 @@ func main() {
 	var u nhc.User
 	var pCount int
 	for i, record := range records[1:] {
+		curEmail := strings.ToLower(strings.TrimSpace(record[5]))
+
 		// If the current e-mail differs from the previous e-mail, treat as
 		// new user, otherwise participant of current user.
-		if record[5] != prevEmail {
+		if curEmail != prevEmail {
 			// Append old user to list of users
 			users = append(users, u)
 
@@ -68,7 +72,7 @@ func main() {
 
 			// Add User Data
 			u.Password = nhc.RandToken()
-			u.Email = record[5]
+			u.Email = curEmail
 			u.FirstName = record[1]
 			u.LastName = record[2]
 			u.Family = record[4]
@@ -94,7 +98,7 @@ func main() {
 				users = append(users, u)
 			}
 
-			prevEmail = record[5]
+			prevEmail = curEmail
 
 			continue
 		}
@@ -140,6 +144,7 @@ func main() {
 			if errM != nil {
 				logrus.Errorf("Failed to add user %s to database: %s", u.Email, errM.Reason)
 				errCount++
+				continue
 			}
 			sucCount++
 			sUsers = append(sUsers, u)
@@ -153,6 +158,11 @@ func main() {
 		logrus.Infof("User count after operation: %d.", after)
 
 		// Send reset password e-mail to each user
+		if nhc.SMTPHost == "" {
+			logrus.Info("Skipping sending password reset e-mails, no SMTP Host set.")
+			return
+		}
+
 		logrus.Info("Sending password reset e-mails.")
 		var rpSucCount, rpErrCount int
 		for _, u := range sUsers {
