@@ -9,9 +9,6 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/bonds0097/nhc-api/nhc"
-	"github.com/codegangsta/negroni"
-	"github.com/gorilla/mux"
-	"github.com/rs/cors"
 )
 
 var (
@@ -75,113 +72,39 @@ func main() {
 		URL = "localhost"
 	}
 
-	dbSession := nhc.DBConnect(MONGODB_URL)
+	nhc.DBSession = nhc.DBConnect(MONGODB_URL)
 
 	if INIT {
-		err := nhc.DBInit(dbSession)
+		err := nhc.DBInit(nhc.DBSession)
 		if err != nil {
 			ctx.WithError(err).Fatal("Failed to initialize DB.")
 		}
 	}
 
-	err = nhc.DBEnsureIndices(dbSession)
+	err = nhc.DBEnsureIndices(nhc.DBSession)
 	if err != nil {
 		ctx.WithError(err).Fatalf("Error ensuring DB indices.")
 	}
 
-	nhc.GLOBALS, err = nhc.FindGlobals(dbSession.DB(nhc.DBNAME))
+	nhc.GLOBALS, err = nhc.FindGlobals(nhc.DBSession.DB(nhc.DBNAME))
 	if err != nil {
 		ctx.Fatalln(err)
 	}
 
 	// This has to happen after globals are loaded.
-	err = nhc.DBEnsureIntegrity(dbSession)
+	err = nhc.DBEnsureIntegrity(nhc.DBSession)
 	if err != nil {
 		ctx.WithError(err).Fatalf("Error ensuring DB integrity.")
 	}
 
 	if resetUsers {
-		err = nhc.ResetUsers(dbSession)
+		err = nhc.ResetUsers(nhc.DBSession)
 		if err != nil {
 			ctx.WithError(err).Fatal("Error reseting users to unregistered.")
 		}
 	}
 
-	corsMiddleware := cors.New(cors.Options{
-		AllowedOrigins: []string{
-			"http://localhost:9000",
-			"https://nutritionhabitchallenge.com",
-			"https://www.nutritionhabitchallenge.com",
-			"https://test.nutritionhabitchallenge.com"},
-		AllowCredentials: true,
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
-		AllowedHeaders:   []string{"*"},
-	})
-
-	router := mux.NewRouter().StrictSlash(true)
-
-	api := router.PathPrefix("/api").Subrouter()
-	api.HandleFunc("/globals", nhc.GetGlobals).Methods("GET")
-	api.HandleFunc("/globals", nhc.SaveGlobals).Methods("POST")
-
-	api.HandleFunc("/commitments", nhc.GetCommitments).Methods("GET")
-
-	api.HandleFunc("/organizations", nhc.GetOrganizations).Methods("GET")
-	api.HandleFunc("/admin/organizations", nhc.AddOrganization).Methods("POST")
-	api.HandleFunc("/admin/organizations", nhc.EditOrganization).Methods("PUT")
-	api.HandleFunc("/admin/organizations/{id}", nhc.DeleteOrganization).Methods("DELETE")
-	api.HandleFunc("/admin/organizations/merge", nhc.MergeOrganizations).Methods("POST")
-
-	api.HandleFunc("/registration", nhc.RegisterUser).Methods("POST")
-
-	api.HandleFunc("/user", nhc.UpdateSelf).Methods("PUT")
-	api.HandleFunc("/admin/user", nhc.GetUsers).Methods("GET")
-	api.HandleFunc("/admin/user", nhc.EditUser).Methods("PUT")
-
-	api.HandleFunc("/admin/message", nhc.SendMessage).Methods("POST")
-
-	api.HandleFunc("/news", nhc.FetchNews).Methods("GET")
-	api.HandleFunc("/admin/news", nhc.ListNews).Methods("GET")
-	api.HandleFunc("/admin/news", nhc.AddNews).Methods("POST")
-	api.HandleFunc("/admin/news/{id}", nhc.DeleteNews).Methods("DELETE")
-	api.HandleFunc("/admin/news/{id}/publish", nhc.PublishNews).Methods("PUT")
-	api.HandleFunc("/admin/news/{id}/unpublish", nhc.UnpublishNews).Methods("PUT")
-
-	api.HandleFunc("/bonus-question", nhc.FetchQuestion).Methods("GET")
-	api.HandleFunc("/bonus-question", nhc.AnswerQuestion).Methods("POST")
-	api.HandleFunc("/admin/bonus-question", nhc.GetQuestions).Methods("GET")
-	api.HandleFunc("/admin/bonus-question", nhc.CreateQuestion).Methods("POST")
-	api.HandleFunc("/admin/bonus-question/{id}", nhc.DeleteQuestion).Methods("DELETE")
-	api.HandleFunc("/admin/bonus-question/{id}/enable", nhc.EnableQuestion).Methods("PUT")
-	api.HandleFunc("/admin/bonus-question/disable", nhc.DisableQuestion).Methods("PUT")
-
-	api.HandleFunc("/participant", nhc.GetParticipants).Methods("GET")
-	api.HandleFunc("/participant/scorecard", nhc.UpdateScorecard).Methods("PUT")
-	api.HandleFunc("/admin/participant", nhc.GetParticipantsAdmin).Methods("GET")
-
-	api.HandleFunc("/faq", nhc.GetFaqs).Methods("GET")
-	api.HandleFunc("/admin/faq", nhc.AddFaq).Methods("POST")
-	api.HandleFunc("/admin/faq", nhc.EditFaq).Methods("PUT")
-	api.HandleFunc("/admin/faq/{id}", nhc.DeleteFaq).Methods("DELETE")
-
-	authAPI := router.PathPrefix("/auth").Subrouter()
-	authAPI.HandleFunc("/", nhc.GetAuthStatus).Methods("GET")
-	authAPI.HandleFunc("/login", nhc.Login).Methods("POST")
-	authAPI.HandleFunc("/signup", nhc.SignUp).Methods("POST")
-	authAPI.HandleFunc("/verify", nhc.Verify).Methods("POST")
-	authAPI.HandleFunc("/verify", nhc.ResendVerify).Methods("GET")
-	authAPI.HandleFunc("/facebook", nhc.LoginWithFacebook).Methods("POST")
-	authAPI.HandleFunc("/google", nhc.LoginWithGoogle).Methods("POST")
-	authAPI.HandleFunc("/password/forgot", nhc.ForgotPassword).Methods("POST")
-	authAPI.HandleFunc("/password/reset", nhc.ResetPassword).Methods("POST")
-
-	n := negroni.Classic()
-	n.Use(nhc.HeaderMiddleware())
-	n.Use(nhc.JWTMiddleware())
-	n.Use(nhc.DBMiddleware(dbSession))
-	n.Use(nhc.ParseFormMiddleware())
-	n.Use(corsMiddleware)
-	n.UseHandler(router)
+	n := nhc.SetupAPI()
 
 	// Start the servers based on whether or not HTTPS is enabled.
 	s := &http.Server{
