@@ -8,6 +8,8 @@ import (
 	"os"
 	"path"
 	"strings"
+
+	"github.com/bonds0097/nhc-api/nhc"
 )
 
 const (
@@ -16,9 +18,9 @@ const (
 )
 
 func loadSSLFiles() (sslCertPath, sslKeyPath string, err error) {
-	ctx := logger.WithField("method", "loadSSLFiles")
-	sslCertPath = path.Join(APP_DIR, sslCertFilename)
-	sslKeyPath = path.Join(APP_DIR, sslKeyFilename)
+	ctx := nhc.Logger.WithField("method", "loadSSLFiles")
+	sslCertPath = path.Join(nhc.APP_DIR, sslCertFilename)
+	sslKeyPath = path.Join(nhc.APP_DIR, sslKeyFilename)
 
 	// Write cert and key to file.
 	errF := ioutil.WriteFile(sslCertPath, sslCertData, 0644)

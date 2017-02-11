@@ -1,5 +1,7 @@
 mongo:
   image: 'mongo:latest'
+  ports:
+    - '27017:27017'
 nhc-api:
   build: .
   entrypoint: /go/bin/nhc-api -env=dev -init=true

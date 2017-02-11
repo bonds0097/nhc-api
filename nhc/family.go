@@ -1,4 +1,4 @@
-package main
+package nhc
 
 import (
 	"errors"
